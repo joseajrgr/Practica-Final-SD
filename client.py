@@ -68,13 +68,15 @@ class client :
 
     
     @staticmethod
-    def connect(user, listen_port):
+    def connect(user, listen_port=5555):
         server_address = client._server
         server_port = client._port
+        CONNECT = 2
+        listen_port = client.find_free_port()
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((server_address, server_port))
-            s.sendall(b'CONNECT\0')
+            s.sendall(CONNECT.to_bytes(4, byteorder='big'))
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
             port_data = str(listen_port).encode('utf-8') + b'\0'
@@ -83,6 +85,8 @@ class client :
             response = s.recv(1)
             if response == b'\x00':
                 print("c > CONNECT OK")
+                 # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
+                client.start_listen_thread(listen_port)
             elif response == b'\x01':
                 print("c > CONNECT FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
@@ -92,6 +96,27 @@ class client :
 
         return client.RC.ERROR
 
+    def find_free_port():
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            return s.getsockname()[1]
+
+    def start_listen_thread(port):
+        # Crear el socket de escucha del cliente
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind(('', port))
+        server_socket.listen(1)
+
+        # Crear el hilo para atender las peticiones de descarga
+        #thread = threading.Thread(target=handle_download_requests, args=(server_socket,))
+        #thread.start()
+
+    def handle_download_requests(server_socket):
+        while True:
+            client_socket, address = server_socket.accept()
+            # Lógica para atender las peticiones de descarga de ficheros
+            # ...
 
     
     @staticmethod

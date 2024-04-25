@@ -7,6 +7,7 @@
 
 #define MAX_USERNAME_LENGTH 256
 #define USERS_FILE "usuarios.txt"
+#define CONNECTIONS_FILE "conexiones.txt"
 #define PORT 5500
 
 // Estructura para pasar argumentos al hilo del cliente
@@ -123,9 +124,66 @@ void *handle_client(void *args) {
                     result = 1;  // Usuario no encontrado
                 }
             }
-        }else {
+        } else if (operacion == 2) {
+            // Lógica para CONNECT
+            FILE *file = fopen(USERS_FILE, "r");
+            if (file == NULL) {
+                perror("Error al abrir el archivo de usuarios");
+                result = 2;
+            } else {
+                char line[MAX_USERNAME_LENGTH];
+                int user_exists = 0;
+
+                // Verificar si el usuario existe
+                while (fgets(line, sizeof(line), file)) {
+                    line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                    if (strcmp(line, username) == 0) {
+                        user_exists = 1;
+                        break;
+                    }
+                }
+                fclose(file);
+
+                if (user_exists) {
+                    // Verificar si el usuario ya está conectado
+                    FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+                    if (connections_file == NULL) {
+                        perror("Error al abrir el archivo de conexiones");
+                        result = 2;
+                    } else {
+                        int user_connected = 0;
+                        while (fgets(line, sizeof(line), connections_file)) {
+                            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                            if (strcmp(line, username) == 0) {
+                                user_connected = 1;
+                                break;
+                            }
+                        }
+                        fclose(connections_file);
+
+                        if (!user_connected) {
+                            // Agregar el usuario al archivo de conexiones
+                            connections_file = fopen(CONNECTIONS_FILE, "a");
+                            if (connections_file == NULL) {
+                                perror("Error al abrir el archivo de conexiones");
+                                result = 2;
+                            } else {
+                                fputs(username, connections_file);
+                                fputs("\n", connections_file);
+                                fclose(connections_file);
+                                result = 0;  // Éxito
+                            }
+                        } else {
+                            result = 2;  // Usuario ya conectado
+                        }
+                    }
+                } else {
+                    result = 1;  // Usuario no existe
+                }
+            }
+        } else {
             printf("Operación desconocida: %d\n", operacion);
-            result = 2;
+            result = 3;
         }
     }
 
