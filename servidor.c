@@ -17,39 +17,41 @@ struct client_thread_args {
 void *handle_client(void *args) {
     struct client_thread_args *client_args = (struct client_thread_args *)args;
     int client_socket = client_args->socket;
-    char operacion[MAX_USERNAME_LENGTH];
+    int32_t operacion = -1;
     char username[MAX_USERNAME_LENGTH];
     int result = 0;
-
+    char buffer[4];
+    
     // Recibir nombre de usuario del cliente
-    if (recv(client_socket, username, MAX_USERNAME_LENGTH, 0) == -1) {
+    if (recv(client_socket, buffer, sizeof(int32_t), 0) == -1) {
         perror("Error al recibir el código de operación");
         result = 2;
     } else {
-        // Aquí la lógica para verificar si el usuario ya está registrado
-        // y actualizar el resultado en consecuencia
-        // Abrir archivo de usuarios
-        FILE *file = fopen(USERS_FILE, "a");
-        if (file == NULL) {
-            perror("Error al abrir el archivo de usuarios");
+        operacion = ntohl(*(int*)buffer);
+
+        // Recibir nombre de usuario del cliente
+        if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
+            perror("Error al recibir el código de operación");
             result = 2;
-        } else {
-            // Comprobar si el usuario ya está registrado
-            char line[MAX_USERNAME_LENGTH];
-            while (fgets(line, MAX_USERNAME_LENGTH, file) != NULL) {
-                if (strcmp(line, username) == 0) {
-                    result = 1; // Usuario ya registrado
-                    break;
-                }
-            }
-            
-            // Si el usuario no está registrado, agregarlo al archivo
-            if (result == 0) {
+        }
+
+        // Verificar si la operación es REGISTER
+        if (operacion == 0) {
+            // Abrir archivo de usuarios
+            FILE *file = fopen(USERS_FILE, "a");
+            if (file == NULL) {
+                perror("Error al abrir el archivo de usuarios");
+                result = 2;
+            } else {
+                // Almacenar el nombre de usuario en el archivo
                 fputs(username, file);
                 fputs("\n", file);
+                fclose(file);
+                printf("Usuario almacenado: %s\n", username);
             }
-
-            fclose(file);
+        } else {
+            printf("Operación desconocida: %d\n", operacion);
+            result = 2;
         }
     }
 

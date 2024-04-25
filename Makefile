@@ -24,6 +24,10 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+# Para crear las carpetas necesarias
+directories:
+	mkdir -p bin obj
+
 # Limpiar archivos generados
 clean:
 	rm -f $(TARGET) $(OBJS)
