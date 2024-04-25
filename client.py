@@ -1,5 +1,7 @@
 from enum import Enum
 import argparse
+import socket
+import argparse
 
 class client :
 
@@ -19,21 +21,73 @@ class client :
 
 
     @staticmethod
-    def  register(user) :
-        #  Write your code here
+    def register(user):
+        server_address = client._server
+        server_port = client._port
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((server_address, server_port))
+            s.sendall(b'REGISTER\0')
+            user_data = user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c > REGISTER OK")
+            elif response == b'\x01':
+                print("c > USERNAME IN USE")
+            else:
+                print("c > REGISTER FAIL")
+
         return client.RC.ERROR
 
    
     @staticmethod
-    def  unregister(user) :
-        #  Write your code here
+    def unregister(user):
+        server_address = client._server
+        server_port = client._port
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((server_address, server_port))
+            s.sendall(b'UNREGISTER\0')
+            user_data = user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c > UNREGISTER OK")
+            elif response == b'\x01':
+                print("c > USER DOES NOT EXIST")
+            else:
+                print("c > UNREGISTER FAIL")
+
         return client.RC.ERROR
 
 
     
     @staticmethod
-    def  connect(user) :
-        #  Write your code here
+    def connect(user, listen_port):
+        server_address = client._server
+        server_port = client._port
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((server_address, server_port))
+            s.sendall(b'CONNECT\0')
+            user_data = user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+            port_data = str(listen_port).encode('utf-8') + b'\0'
+            s.sendall(port_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c > CONNECT OK")
+            elif response == b'\x01':
+                print("c > CONNECT FAIL, USER DOES NOT EXIST")
+            elif response == b'\x02':
+                print("c > USER ALREADY CONNECTED")
+            else:
+                print("c > CONNECT FAIL")
+
         return client.RC.ERROR
 
 
@@ -172,8 +226,8 @@ class client :
             parser.error("Error: Port must be in the range 1024 <= port <= 65535");
             return False;
         
-        _server = args.s
-        _port = args.p
+        client._server = args.s
+        client._port = args.p
 
         return True
 
