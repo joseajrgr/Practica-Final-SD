@@ -47,10 +47,11 @@ class client :
     def unregister(user):
         server_address = client._server
         server_port = client._port
+        UNREGISTER = 1
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((server_address, server_port))
-            s.sendall(b'UNREGISTER\0')
+            s.sendall(UNREGISTER.to_bytes(4, byteorder='big'))
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
