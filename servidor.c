@@ -125,6 +125,23 @@ void *handle_client(void *args) {
                 }
             }
         } else if (operacion == 2) {
+            char ip[16];
+            int port;
+            
+            // Recibir IP del cliente
+            if (recv(client_socket, ip, sizeof(ip), 0) == -1) {
+                perror("Error al recibir la IP del cliente");
+                result = 2;
+            }
+            
+            // Recibir puerto del cliente
+            if (recv(client_socket, buffer, sizeof(buffer), 0) == -1) {
+                perror("Error al recibir el puerto del cliente");
+                result = 2;
+            } else {
+                port = atoi(buffer);
+            }
+
             // Lógica para CONNECT
             FILE *file = fopen(USERS_FILE, "r");
             if (file == NULL) {
@@ -168,8 +185,7 @@ void *handle_client(void *args) {
                                 perror("Error al abrir el archivo de conexiones");
                                 result = 2;
                             } else {
-                                fputs(username, connections_file);
-                                fputs("\n", connections_file);
+                                fprintf(connections_file, "%s %s %d\n", username, ip, port);
                                 fclose(connections_file);
                                 result = 0;  // Éxito
                             }

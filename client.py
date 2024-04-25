@@ -79,6 +79,12 @@ class client :
             s.sendall(CONNECT.to_bytes(4, byteorder='big'))
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
+
+            # Enviar IP y puerto del cliente al servidor
+            ip = socket.gethostbyname(socket.gethostname())
+            ip_data = ip.encode('utf-8') + b'\0'
+            s.sendall(ip_data)
+
             port_data = str(listen_port).encode('utf-8') + b'\0'
             s.sendall(port_data)
 
