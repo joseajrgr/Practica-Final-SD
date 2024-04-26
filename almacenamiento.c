@@ -12,9 +12,7 @@
 #define CONNECTIONS_FILE "conexiones.txt"
 #define USERS_DIRECTORY "users"
 
-
-
-int registrar_usuario(char username[MAX_USERNAME_LENGTH]) {
+int register_user(char username[MAX_USERNAME_LENGTH]) {
     int result = 0;
 
     // Crear la carpeta "users" si no existe

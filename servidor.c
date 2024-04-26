@@ -24,7 +24,7 @@ void *handle_client(void *args) {
     int result = 0;
     char buffer[4];
     
-    // Recibir nombre de usuario del cliente
+    // Recibir código de operación
     if (recv(client_socket, buffer, sizeof(int32_t), 0) == -1) {
         perror("Error al recibir el código de operación");
         result = 2;
@@ -33,17 +33,16 @@ void *handle_client(void *args) {
 
         // Recibir nombre de usuario del cliente
         if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
-            perror("Error al recibir el código de operación");
+            perror("Error al recibir el nombre del cliente");
             result = 2;
         }
 
-         // Verificar si la operación es REGISTER
-    if (operacion == 0) {
-        // Lógica para REGISTER
-        registrar_usuario(username);
-        
-    } else if (operacion == 1) {
-            // Lógica para UNREGISTER
+        // Verificar si la operación es REGISTER
+        if (operacion == 0) {
+            register_user(username);
+
+        // Verificar si la operación es UNREGISTER
+        } else if (operacion == 1) {
             FILE *file = fopen(USERS_FILE, "r");
             if (file == NULL) {
                 perror("Error al abrir el archivo de usuarios");
@@ -92,6 +91,8 @@ void *handle_client(void *args) {
                     result = 1;  // Usuario no encontrado
                 }
             }
+            
+        // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
             char ip[16];
             int port;
@@ -165,6 +166,7 @@ void *handle_client(void *args) {
                     result = 1;  // Usuario no existe
                 }
             }
+
         } else {
             printf("Operación desconocida: %d\n", operacion);
             result = 3;
@@ -217,7 +219,7 @@ int main() {
             continue;
         }
 
-        // Manejar la operación REGISTER en un hilo separado
+        // Manejar las operaciones en hilos separados
         pthread_t thread;
         struct client_thread_args *args = malloc(sizeof(struct client_thread_args));
         args->socket = client_socket;

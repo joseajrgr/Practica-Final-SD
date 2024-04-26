@@ -1,3 +1,10 @@
+#ifndef ALMACENAMIENTO_H
+#define ALMACENAMIENTO_H
+
 #define MAX_USERNAME_LENGTH 256
 
-int registrar_usuario(char username[MAX_USERNAME_LENGTH]);
+int register_user(char username[MAX_USERNAME_LENGTH]);
+int unregister_user(char username[MAX_USERNAME_LENGTH]);
+int connect_user(char username[MAX_USERNAME_LENGTH]);
+
+#endif
