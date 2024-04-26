@@ -8,7 +8,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pthread
 
 # Archivos fuente
-SRCS = servidor.c
+SRCS = servidor.c almacenamiento.c
 
 # Objetos generados
 OBJS = $(SRCS:.c=.o)
@@ -21,7 +21,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Regla para compilar los archivos fuente en objetos
-%.o: %.c
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Para crear las carpetas necesarias
