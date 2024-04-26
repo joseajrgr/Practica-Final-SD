@@ -4,50 +4,45 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <sys/stat.h>
 #include "almacenamiento.h"
 
 #define MAX_USERNAME_LENGTH 256
 #define USERS_FILE "usuarios.txt"
 #define CONNECTIONS_FILE "conexiones.txt"
+#define USERS_DIRECTORY "users"
 
-int result = 0;
 
-int registrar_usuario(username) {
-    // Abrir archivo de usuarios
-    FILE *file = fopen(USERS_FILE, "r");
-    if (file == NULL) {
-        perror("Error al abrir el archivo de usuarios");
-        result = 2;
-    } else {
-        char line[MAX_USERNAME_LENGTH];
-        int user_exists = 0;
 
-        // Verificar si el usuario ya está registrado
-        while (fgets(line, sizeof(line), file)) {
-            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-            if (strcmp(line, username) == 0) {
-                user_exists = 1;
-                break;
-            }
+int registrar_usuario(char username[MAX_USERNAME_LENGTH]) {
+    int result = 0;
+
+    // Crear la carpeta "users" si no existe
+    struct stat st = {0};
+    if (stat(USERS_DIRECTORY, &st) == -1) {
+        if (mkdir(USERS_DIRECTORY, 0777) == -1) {
+            perror("Error al crear la carpeta 'users'");
+            return 2;
         }
-        fclose(file);
+    }
 
-        if (user_exists) {
-            result = 1;  // Usuario ya registrado
+    // Construir la ruta de la carpeta del usuario
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+
+    // Verificar si la carpeta del usuario ya existe
+    if (stat(user_directory, &st) == -1) {
+        // La carpeta no existe, crearla
+        if (mkdir(user_directory, 0777) == -1) {
+            perror("Error al crear la carpeta del usuario");
+            result = 2;
         } else {
-            // Abrir archivo de usuarios en modo append
-            file = fopen(USERS_FILE, "a");
-            if (file == NULL) {
-                perror("Error al abrir el archivo de usuarios");
-                result = 2;
-            } else {
-                // Almacenar el nombre de usuario en el archivo
-                fputs(username, file);
-                fputs("\n", file);
-                fclose(file);
-                printf("Usuario almacenado: %s\n", username);
-            }
+            printf("Usuario registrado y carpeta creada: %s\n", user_directory);
+            result = 0;  // Registro exitoso
         }
+    } else {
+        printf("El usuario ya está registrado: %s\n", username);
+        result = 1;  // Usuario ya registrado
     }
 
     return result;

@@ -4,13 +4,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-#include "sockets.h"
 #include "almacenamiento.h"
 
 #define MAX_USERNAME_LENGTH 256
-#define PORT 5500
 #define USERS_FILE "usuarios.txt"
 #define CONNECTIONS_FILE "conexiones.txt"
+#define PORT 5500
 
 // Estructura para pasar argumentos al hilo del cliente
 struct client_thread_args {
@@ -40,7 +39,9 @@ void *handle_client(void *args) {
 
          // Verificar si la operación es REGISTER
     if (operacion == 0) {
+        // Lógica para REGISTER
         registrar_usuario(username);
+        
     } else if (operacion == 1) {
             // Lógica para UNREGISTER
             FILE *file = fopen(USERS_FILE, "r");
