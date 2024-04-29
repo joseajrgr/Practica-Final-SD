@@ -49,55 +49,26 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
 int unregister_user(char username[MAX_USERNAME_LENGTH]) {
     int result = 0;
 
-    FILE *file = fopen(USERS_FILE, "r");
-    if (file == NULL) {
-        perror("Error al abrir el archivo de usuarios");
-        result = 2;
+    // Construir la ruta de la carpeta del usuario
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+
+    // Verificar si la carpeta del usuario existe
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        printf("Usuario no encontrado: %s\n", username);
+        result = 1;  // Usuario no encontrado
     } else {
-        char line[MAX_USERNAME_LENGTH];
-        int user_exists = 0;
-
-        // Verificar si el usuario existe
-        while (fgets(line, sizeof(line), file)) {
-            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-            if (strcmp(line, username) == 0) {
-                user_exists = 1;
-                break;
-            }
-        }
-        fclose(file);
-
-        if (user_exists) {
-            // Eliminar el usuario del archivo
-            FILE *temp_file = fopen("temp.txt", "w");
-            if (temp_file == NULL) {
-                perror("Error al crear el archivo temporal");
-                result = 2;
-            } else {
-                file = fopen(USERS_FILE, "r");
-                if (file == NULL) {
-                    perror("Error al abrir el archivo de usuarios");
-                    result = 2;
-                } else {
-                    while (fgets(line, sizeof(line), file)) {
-                        line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                        if (strcmp(line, username) != 0) {
-                            fputs(line, temp_file);
-                            fputs("\n", temp_file);
-                        }
-                    }
-                    fclose(file);
-                    fclose(temp_file);
-                    remove(USERS_FILE);
-                    rename("temp.txt", USERS_FILE);
-                    printf("Usuario eliminado: %s\n", username);
-                }
-            }
+        // La carpeta existe, eliminarla
+        if (remove(user_directory) == -1) {
+            perror("Error al eliminar la carpeta del usuario");
+            result = 2;
         } else {
-            result = 1;  // Usuario no encontrado
+            printf("Usuario eliminado: %s\n", username);
+            result = 0;  // Baja exitosa
         }
     }
-    
+
     return result;
 }
 
