@@ -1,2 +1,4 @@
 servidor
 servidor.o
+obj/
+bin/

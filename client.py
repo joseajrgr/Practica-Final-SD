@@ -34,11 +34,11 @@ class client :
 
             response = s.recv(1)
             if response == b'\x00':
-                print("c > REGISTER OK")
+                print("c> REGISTER OK")
             elif response == b'\x01':
-                print("c > USERNAME IN USE")
+                print("c> USERNAME IN USE")
             else:
-                print("c > REGISTER FAIL")
+                print("c> REGISTER FAIL")
 
         return client.RC.ERROR
 
@@ -57,11 +57,11 @@ class client :
 
             response = s.recv(1)
             if response == b'\x00':
-                print("c > UNREGISTER OK")
+                print("c> UNREGISTER OK")
             elif response == b'\x01':
-                print("c > USER DOES NOT EXIST")
+                print("c> USER DOES NOT EXIST")
             else:
-                print("c > UNREGISTER FAIL")
+                print("c> UNREGISTER FAIL")
 
         return client.RC.ERROR
 
@@ -90,15 +90,15 @@ class client :
 
             response = s.recv(1)
             if response == b'\x00':
-                print("c > CONNECT OK")
+                print("c> CONNECT OK")
                  # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
                 client.start_listen_thread(listen_port)
             elif response == b'\x01':
-                print("c > CONNECT FAIL, USER DOES NOT EXIST")
+                print("c> CONNECT FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
-                print("c > USER ALREADY CONNECTED")
+                print("c> USER ALREADY CONNECTED")
             else:
-                print("c > CONNECT FAIL")
+                print("c> CONNECT FAIL")
 
         return client.RC.ERROR
 
@@ -142,7 +142,24 @@ class client :
 
     @staticmethod
     def  listusers() :
-        #  Write your code here
+        server_address = client._server
+        server_port = client._port
+        LISTUSERS = 6
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((server_address, server_port))
+            s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c> LIST_USERS OK")
+            elif response == b'\x01':
+                print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
+            elif response == b'\x02':
+                print("c> LIST_USERS FAIL, USER NOT CONNECTED")
+            else:
+                print("c> LIST_USERS FAIL")
+
         return client.RC.ERROR
 
     @staticmethod

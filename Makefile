@@ -1,5 +1,5 @@
 # Nombre del ejecutable
-TARGET = servidor
+TARGET = bin/servidor
 
 # Compilador
 CC = gcc
@@ -8,20 +8,24 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pthread
 
 # Archivos fuente
-SRCS = servidor.c almacenamiento.c
+SRCS = src/servidor.c src/almacenamiento.c
 
 # Objetos generados
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:src/%.c=obj/%.o)
 
 # Regla por defecto para generar el ejecutable
-all: $(TARGET)
+all: directories $(TARGET)
 
 # Regla para compilar el ejecutable
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Regla para compilar los archivos fuente en objetos
-%.o: %.c %.h
+obj/%.o: src/%.c include/%.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Regla para compilar el servidor
+obj/servidor.o: src/servidor.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Para crear las carpetas necesarias
