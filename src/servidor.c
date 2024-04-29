@@ -7,7 +7,7 @@
 #include "../include/almacenamiento.h"
 
 #define MAX_USERNAME_LENGTH 256
-#define USERS_FILE "usuarios.txt"
+#define MAX_FILE_LENGTH 256
 #define CONNECTIONS_FILE "conexiones.txt"
 #define PORT 5500
 
@@ -66,6 +66,24 @@ void *handle_client(void *args) {
 
             // Lógica para CONNECT
             connect_user(username, ip, port);
+
+        // Verificar si la operación es DISCONNECT
+        } else if (operacion == 3) {
+
+        // Verificar si la operación es PUBLISH
+        } else if (operacion == 4) {
+
+        // Verificar si la operación es DELETE
+        } else if (operacion == 5) {
+
+        // Verificar si la operación es LISTUSERS
+        } else if (operacion == 6) {
+
+        // Verificar si la operación es LISTCONTENT
+        } else if (operacion == 7) {
+
+        // Verificar si la operación es GETFILE
+        } else if (operacion == 8) {
 
         // Verificar si la operación no se conoce
         } else {

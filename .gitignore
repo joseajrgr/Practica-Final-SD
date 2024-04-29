@@ -2,3 +2,5 @@ servidor
 servidor.o
 obj/
 bin/
+Sockets/
+py/__pycache__/
