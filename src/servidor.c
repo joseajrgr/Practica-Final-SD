@@ -48,22 +48,22 @@ void *handle_client(void *args) {
         // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
             char ip[16];
-            int port;
+            int32_t port;
             
             // Recibir IP del cliente
             if (recv(client_socket, ip, sizeof(ip), 0) == -1) {
                 perror("Error al recibir la IP del cliente");
                 result = 2;
             }
-            
+            printf("IP: %s\n", ip);
             // Recibir puerto del cliente
-            if (recv(client_socket, buffer, sizeof(buffer), 0) == -1) {
+            if (recv(client_socket, &port, sizeof(port), 0) == -1) {
                 perror("Error al recibir el puerto del cliente");
                 result = 2;
             } else {
-                port = atoi(buffer);
+                port = ntohl(port);
             }
-
+            printf("Puerto: %d\n", port);
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
 
@@ -108,6 +108,14 @@ int main() {
     int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
+
+    // Crear el archivo "conexiones.txt" si no existe
+    FILE *file = fopen(CONNECTIONS_FILE, "w");
+    if (file == NULL) {
+        perror("Error al crear el archivo de conexiones");
+        exit(EXIT_FAILURE);
+    }
+    fclose(file);
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {

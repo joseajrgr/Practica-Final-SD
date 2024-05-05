@@ -75,60 +75,48 @@ int unregister_user(char username[MAX_USERNAME_LENGTH]) {
 int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
     int result = 0;
 
-    FILE *file = fopen(USERS_FILE, "r");
-            if (file == NULL) {
-                perror("Error al abrir el archivo de usuarios");
-                result = 2;
-            } else {
-                char line[MAX_USERNAME_LENGTH];
-                int user_exists = 0;
-
-                // Verificar si el usuario existe
-                while (fgets(line, sizeof(line), file)) {
-                    line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                    if (strcmp(line, username) == 0) {
-                        user_exists = 1;
-                        break;
-                    }
-                }
-                fclose(file);
-
-                if (user_exists) {
-                    // Verificar si el usuario ya está conectado
-                    FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
-                    if (connections_file == NULL) {
-                        perror("Error al abrir el archivo de conexiones");
-                        result = 2;
-                    } else {
-                        int user_connected = 0;
-                        while (fgets(line, sizeof(line), connections_file)) {
-                            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                            if (strcmp(line, username) == 0) {
-                                user_connected = 1;
-                                break;
-                            }
-                        }
-                        fclose(connections_file);
-
-                        if (!user_connected) {
-                            // Agregar el usuario al archivo de conexiones
-                            connections_file = fopen(CONNECTIONS_FILE, "a");
-                            if (connections_file == NULL) {
-                                perror("Error al abrir el archivo de conexiones");
-                                result = 2;
-                            } else {
-                                fprintf(connections_file, "%s %s %d\n", username, ip, port);
-                                fclose(connections_file);
-                                result = 0;  // Éxito
-                            }
-                        } else {
-                            result = 2;  // Usuario ya conectado
-                        }
-                    }
-                } else {
-                    result = 1;  // Usuario no existe
+    // Construir la ruta de la carpeta del usuario
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    printf("Directorio del usuario: %s\n", user_directory);
+    // Verificar si la carpeta del usuario existe
+    struct stat st = {0};
+    if (stat(user_directory, &st) == 0) {
+        // La carpeta del usuario existe
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            result = 2;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
                 }
             }
+            fclose(connections_file);
 
+            if (!user_connected) {
+                // Agregar el usuario al archivo de conexiones
+                connections_file = fopen(CONNECTIONS_FILE, "a");
+                if (connections_file == NULL) {
+                    perror("Error al abrir el archivo de conexiones");
+                    result = 2;
+                } else {
+                    fprintf(connections_file, "%s %s %d\n", username, ip, port);
+                    fclose(connections_file);
+                    result = 0;  // Éxito
+                }
+            } else {
+                result = 2;  // Usuario ya conectado
+            }
+        }
+    } else {
+        printf("Usuario no encontrado: %s\n", username);
+        result = 1;  // Usuario no encontrado
+    }
     return result;
 }

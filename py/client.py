@@ -66,8 +66,9 @@ class client :
     @staticmethod
     def connect(user, listen_port=5555):
         CONNECT = 2
+        print("c> Connecting to server...")
         listen_port = aux.find_free_port()
-
+        print("c> Port: " + str(listen_port))
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(CONNECT.to_bytes(4, byteorder='big'))
@@ -75,24 +76,28 @@ class client :
             s.sendall(user_data)
 
             # Enviar IP y puerto del cliente al servidor
+            print("c> Port: " + str(listen_port))
             ip = socket.gethostbyname(socket.gethostname())
             ip_data = ip.encode('utf-8') + b'\0'
             s.sendall(ip_data)
-
-            port_data = str(listen_port).encode('utf-8') + b'\0'
+            print("c> Port: " + str(listen_port))
+            port_data = listen_port.to_bytes(4, byteorder='big')
             s.sendall(port_data)
 
             response = s.recv(1)
             if response == b'\x00':
                 print("c> CONNECT OK")
-                 # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
-                aux.start_listen_thread(listen_port)
+                # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
+                #aux.start_listen_thread(listen_port)
             elif response == b'\x01':
                 print("c> CONNECT FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
                 print("c> USER ALREADY CONNECTED")
             else:
                 print("c> CONNECT FAIL")
+        
+        # Cerrar la conexión después de recibir la respuesta del servidor
+        s.close()
 
         return client.RC.ERROR
     
