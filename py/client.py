@@ -117,12 +117,15 @@ class client :
             s.connect((client._server, client._port))
             s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
 
+            print("Enviando nombre de usuario: ", client._user)
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
+            print("Enviando nombre del fichero: ", file_name)
             file_name_data = file_name.encode('utf-8') + b'\0'
             s.sendall(file_name_data)
 
+            print("Enviando descripción del fichero: ", description)
             description_data = description.encode('utf-8') + b'\0'
             s.sendall(description_data)
 
@@ -146,16 +149,27 @@ class client :
         return client.RC.ERROR
 
     @staticmethod
-    def  listusers() :
+    def listusers():
         LISTUSERS = 6
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
 
+            print(f"Enviando nombre de usuario: {client._user}")
+            user_data = client._user.encode('utf-8') + b'\0'
+            bytes_sent = s.send(user_data)
+            print(f"Bytes enviados: {bytes_sent}")
+
             response = s.recv(1)
             if response == b'\x00':
                 print("c> LIST_USERS OK")
+                num_users = int(s.recv(1024).decode('utf-8'))
+                for _ in range(num_users):
+                    username = s.recv(1024).decode('utf-8')
+                    ip = s.recv(1024).decode('utf-8')
+                    port = s.recv(1024).decode('utf-8')
+                    print(f"{username} {ip} {port}")
             elif response == b'\x01':
                 print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':

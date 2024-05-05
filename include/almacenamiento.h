@@ -8,4 +8,6 @@ int register_user(char username[MAX_USERNAME_LENGTH]);
 int unregister_user(char username[MAX_USERNAME_LENGTH]);
 int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port);
 int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH], char description[MAX_FILE_LENGTH]);
+int list_connected_users(char username[MAX_USERNAME_LENGTH], int client_socket);
+
 #endif

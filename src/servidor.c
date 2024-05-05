@@ -78,24 +78,27 @@ void *handle_client(void *args) {
             char description[MAX_FILE_LENGTH];
 
             // Recibir nombre de usuario del cliente
-            if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
+            memset(username, 0, sizeof(username));
+            if (recv(client_socket, username, sizeof(username), 0) == -1) {
                 perror("Error al recibir el nombre del cliente");
                 result = 4;
             }
-
+            printf("Nombre de usuario recibido: %s\n", username);
             // Recibir nombre del fichero del cliente
-            if (recv(client_socket, file_name, sizeof(char[MAX_FILE_LENGTH]), 0) == -1) {
+            memset(file_name, 0, sizeof(file_name));
+            if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
                 perror("Error al recibir el nombre del fichero");
                 result = 4;
             }
-
+            printf("Nombre del fichero recibido: %s\n", file_name);
             // Recibir descripción del fichero del cliente
-            if (recv(client_socket, description, sizeof(char[MAX_FILE_LENGTH]), 0) == -1) {
+            memset(description, 0, sizeof(description));
+            if (recv(client_socket, description, sizeof(description), 0) == -1) {
                 perror("Error al recibir la descripción del fichero");
                 result = 4;
             }
-            printf("Nombre de usuario: %s\n", username);
-            printf("Nombre del fichero: %s\n", file_name);
+            printf("Descripción del fichero recibida: %s\n", description);
+            
             printf("Descripción: %s\n", description);
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
@@ -105,7 +108,21 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es LISTUSERS
         } else if (operacion == 6) {
-
+           // Recibir nombre de usuario del cliente
+            printf("Recibiendo nombre de usuario\n");
+            memset(username, 0, sizeof(username));
+            ssize_t bytes_read = recv(client_socket, username, sizeof(username) - 1, 0);
+            printf("Bytes recibidos: %zd\n", bytes_read);
+            if (bytes_read == -1) {
+                perror("Error al recibir el nombre del cliente");
+                result = 3;
+            } else {
+                // Eliminar el carácter de terminación null del nombre de usuario
+                username[strcspn(username, "\n")] = '\0';
+                printf("Nombre de usuario recibido: '%s'\n", username);
+            }
+            // Lógica para LISTUSERS
+            result = list_connected_users(username, client_socket);
         // Verificar si la operación es LISTCONTENT
         } else if (operacion == 7) {
 

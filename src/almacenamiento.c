@@ -176,3 +176,91 @@ int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LEN
 
     return result;
 }
+int list_connected_users(char username[MAX_USERNAME_LENGTH], int client_socket) {
+    int result = 0;
+
+    // Verificar si el usuario existe
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        result = 1;  // Usuario no existe
+    } else {
+        // Verificar si el usuario está conectado
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            result = 3;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
+                }
+            }
+            fclose(connections_file);
+
+            if (user_connected) {
+                // Enviar código de éxito al cliente
+                char success_code = 0;
+                send(client_socket, &success_code, sizeof(success_code), 0);
+
+                // Obtener la lista de usuarios conectados
+                connections_file = fopen(CONNECTIONS_FILE, "r");
+                if (connections_file == NULL) {
+                    perror("Error al abrir el archivo de conexiones");
+                    result = 3;
+                } else {
+                    int num_users = 0;
+                    while (fgets(line, sizeof(line), connections_file)) {
+                        num_users++;
+                    }
+                    fclose(connections_file);
+
+                    // Enviar el número de usuarios al cliente
+                    char num_users_str[10];
+                    snprintf(num_users_str, sizeof(num_users_str), "%d", num_users);
+                    send(client_socket, num_users_str, strlen(num_users_str), 0);
+
+                    // Enviar la información de cada usuario al cliente
+                    connections_file = fopen(CONNECTIONS_FILE, "r");
+                    if (connections_file == NULL) {
+                        perror("Error al abrir el archivo de conexiones");
+                        result = 3;
+                    } else {
+                        while (fgets(line, sizeof(line), connections_file)) {
+                            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                            char *token = strtok(line, " ");
+                            char connected_username[MAX_USERNAME_LENGTH];
+                            char ip[16];
+                            char port[6];
+                            if (token != NULL) {
+                                strcpy(connected_username, token);
+                                token = strtok(NULL, " ");
+                                if (token != NULL) {
+                                    strcpy(ip, token);
+                                    token = strtok(NULL, " ");
+                                    if (token != NULL) {
+                                        strcpy(port, token);
+                                    }
+                                }
+                            }
+                            send(client_socket, connected_username, strlen(connected_username), 0);
+                            send(client_socket, ip, strlen(ip), 0);
+                            send(client_socket, port, strlen(port), 0);
+                        }
+                        fclose(connections_file);
+                        result = 0;  // Éxito
+                    }
+                }
+            } else {
+                result = 2;  // Usuario no conectado
+            }
+        }
+    }
+
+    return result;
+}
