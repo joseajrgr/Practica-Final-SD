@@ -39,11 +39,11 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
-            register_user(username);
+            result = register_user(username);
 
         // Verificar si la operación es UNREGISTER
         } else if (operacion == 1) {
-            unregister_user(username);
+            result = unregister_user(username);
                       
         // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
@@ -65,7 +65,7 @@ void *handle_client(void *args) {
             }
 
             // Lógica para CONNECT
-            connect_user(username, ip, port);
+            result = connect_user(username, ip, port);
 
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
