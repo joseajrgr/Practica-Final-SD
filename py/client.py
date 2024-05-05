@@ -16,6 +16,7 @@ class client :
     # ****************** ATTRIBUTES ******************
     _server = None
     _port = -1
+    _user = None
 
     # ******************** METHODS *******************
 
@@ -65,6 +66,9 @@ class client :
     
     @staticmethod
     def connect(user, listen_port=5555):
+        if client._user is not None:
+            print("c> USER ALREADY CONNECTED")
+            return client.RC.USER_ERROR
         CONNECT = 2
         print("c> Connecting to server...")
         listen_port = aux.find_free_port()
@@ -87,18 +91,17 @@ class client :
             response = s.recv(1)
             if response == b'\x00':
                 print("c> CONNECT OK")
+                client._user = user
                 # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
                 #aux.start_listen_thread(listen_port)
             elif response == b'\x01':
                 print("c> CONNECT FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
                 print("c> USER ALREADY CONNECTED")
+                client._user = user
             else:
                 print("c> CONNECT FAIL")
-        
-        # Cerrar la conexión después de recibir la respuesta del servidor
-        s.close()
-
+                
         return client.RC.ERROR
     
     @staticmethod
@@ -107,16 +110,21 @@ class client :
         return client.RC.ERROR
 
     @staticmethod
-    def  publish(fileName,  description) :
+    def publish(file_name, description):
         PUBLISH = 4
-
+        
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
-            user_file = fileName.encode('utf-8') + b'\0'
-            s.sendall(user_file)
-            user_description = description.encode('utf-8') + b'\0'
-            s.sendall(user_description)
+
+            user_data = client._user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+
+            file_name_data = file_name.encode('utf-8') + b'\0'
+            s.sendall(file_name_data)
+
+            description_data = description.encode('utf-8') + b'\0'
+            s.sendall(description_data)
 
             response = s.recv(1)
             if response == b'\x00':
@@ -124,7 +132,7 @@ class client :
             elif response == b'\x01':
                 print("c> PUBLISH FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
-                print("c> PUBLISH FAIL, USER NOT CONNECTE")
+                print("c> PUBLISH FAIL, USER NOT CONNECTED")
             elif response == b'\x03':
                 print("c> PUBLISH FAIL, CONTENT ALREADY PUBLISHED")
             else:

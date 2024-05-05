@@ -30,7 +30,8 @@ void *handle_client(void *args) {
         result = 2;
     } else {
         operacion = ntohl(*(int*)buffer);
-
+        
+        printf("Operación: %d\n", operacion);
         // Recibir nombre de usuario del cliente
         if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
             perror("Error al recibir el nombre del cliente");
@@ -72,6 +73,32 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
+            printf("Operación PUBLISH\n");
+            char file_name[MAX_FILE_LENGTH];
+            char description[MAX_FILE_LENGTH];
+
+            // Recibir nombre de usuario del cliente
+            if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
+                perror("Error al recibir el nombre del cliente");
+                result = 4;
+            }
+
+            // Recibir nombre del fichero del cliente
+            if (recv(client_socket, file_name, sizeof(char[MAX_FILE_LENGTH]), 0) == -1) {
+                perror("Error al recibir el nombre del fichero");
+                result = 4;
+            }
+
+            // Recibir descripción del fichero del cliente
+            if (recv(client_socket, description, sizeof(char[MAX_FILE_LENGTH]), 0) == -1) {
+                perror("Error al recibir la descripción del fichero");
+                result = 4;
+            }
+            printf("Nombre de usuario: %s\n", username);
+            printf("Nombre del fichero: %s\n", file_name);
+            printf("Descripción: %s\n", description);
+            // Lógica para PUBLISH
+            result = publish_file(username, file_name, description);
 
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {

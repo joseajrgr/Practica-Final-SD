@@ -8,6 +8,7 @@
 #include "../include/almacenamiento.h"
 
 #define MAX_USERNAME_LENGTH 256
+#define MAX_FILE_LENGTH 256
 #define USERS_FILE "usuarios.txt"
 #define CONNECTIONS_FILE "conexiones.txt"
 #define USERS_DIRECTORY "users"
@@ -118,5 +119,60 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
         printf("Usuario no encontrado: %s\n", username);
         result = 1;  // Usuario no encontrado
     }
+    return result;
+}
+
+
+int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH], char description[MAX_FILE_LENGTH]) {
+    int result = 0;
+
+    // Verificar si el usuario existe
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        result = 1;  // Usuario no existe
+    } else {
+        // Verificar si el usuario está conectado
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            result = 4;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
+                }
+            }
+            fclose(connections_file);
+
+            if (user_connected) {
+                // Verificar si el fichero ya está publicado
+                char file_path[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + sizeof(USERS_DIRECTORY) + 4];
+                snprintf(file_path, sizeof(file_path), "%s/%s/%s", USERS_DIRECTORY, username, file_name);
+                if (access(file_path, F_OK) != -1) {
+                    result = 3;  // Fichero ya publicado
+                } else {
+                    // Publicar el fichero
+                    FILE *file = fopen(file_path, "w");
+                    if (file == NULL) {
+                        perror("Error al crear el fichero");
+                        result = 4;
+                    } else {
+                        fprintf(file, "%s\n", description);
+                        fclose(file);
+                        result = 0;  // Éxito
+                    }
+                }
+            } else {
+                result = 2;  // Usuario no conectado
+            }
+        }
+    }
+
     return result;
 }
