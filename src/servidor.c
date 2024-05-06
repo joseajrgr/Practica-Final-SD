@@ -77,9 +77,6 @@ void *handle_client(void *args) {
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
-
-            printf("Nombre de usuario recibido: %s\n", username);
-
             if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
                 perror("Error al recibir el nombre del cliente");
                 result = 4;

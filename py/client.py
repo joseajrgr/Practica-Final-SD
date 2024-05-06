@@ -140,7 +140,7 @@ class client :
             print("Enviando nombre de usuario: ", client._user)
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
-
+            
             print("Enviando nombre del fichero: ", file_name)
             file_name_data = file_name.encode('utf-8') + b'\0'
             s.sendall(file_name_data)
