@@ -208,53 +208,24 @@ int list_connected_users(char username[MAX_USERNAME_LENGTH], int client_socket) 
                 char success_code = 0;
                 send(client_socket, &success_code, sizeof(success_code), 0);
 
-                // Obtener la lista de usuarios conectados
+                // Leer el contenido del archivo de conexiones y enviarlo al cliente
                 connections_file = fopen(CONNECTIONS_FILE, "r");
                 if (connections_file == NULL) {
                     perror("Error al abrir el archivo de conexiones");
                     result = 3;
                 } else {
-                    int num_users = 0;
+                    char file_contents[1024] = {0};
                     while (fgets(line, sizeof(line), connections_file)) {
-                        num_users++;
+                        line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                        strcat(file_contents, line);
+                        strcat(file_contents, "\n");
                     }
                     fclose(connections_file);
 
-                    // Enviar el número de usuarios al cliente
-                    char num_users_str[10];
-                    snprintf(num_users_str, sizeof(num_users_str), "%d", num_users);
-                    send(client_socket, num_users_str, strlen(num_users_str), 0);
+                    // Enviar el contenido del archivo al cliente
+                    send(client_socket, file_contents, strlen(file_contents), 0);
 
-                    // Enviar la información de cada usuario al cliente
-                    connections_file = fopen(CONNECTIONS_FILE, "r");
-                    if (connections_file == NULL) {
-                        perror("Error al abrir el archivo de conexiones");
-                        result = 3;
-                    } else {
-                        while (fgets(line, sizeof(line), connections_file)) {
-                            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                            char *token = strtok(line, " ");
-                            char connected_username[MAX_USERNAME_LENGTH];
-                            char ip[16];
-                            char port[6];
-                            if (token != NULL) {
-                                strcpy(connected_username, token);
-                                token = strtok(NULL, " ");
-                                if (token != NULL) {
-                                    strcpy(ip, token);
-                                    token = strtok(NULL, " ");
-                                    if (token != NULL) {
-                                        strcpy(port, token);
-                                    }
-                                }
-                            }
-                            send(client_socket, connected_username, strlen(connected_username), 0);
-                            send(client_socket, ip, strlen(ip), 0);
-                            send(client_socket, port, strlen(port), 0);
-                        }
-                        fclose(connections_file);
-                        result = 0;  // Éxito
-                    }
+                    result = 0;  // Éxito
                 }
             } else {
                 result = 2;  // Usuario no conectado

@@ -77,12 +77,7 @@ void *handle_client(void *args) {
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
-            // Recibir nombre de usuario del cliente
-            memset(username, 0, sizeof(username));
-            if (recv(client_socket, username, sizeof(username), 0) == -1) {
-                perror("Error al recibir el nombre del cliente");
-                result = 4;
-            }
+
             printf("Nombre de usuario recibido: %s\n", username);
             // Recibir nombre del fichero del cliente
             memset(file_name, 0, sizeof(file_name));
@@ -108,22 +103,10 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es LISTUSERS
         } else if (operacion == 6) {
-           // Recibir nombre de usuario del cliente
-            printf("Recibiendo nombre de usuario\n");
-            memset(username, 0, sizeof(username));
-            ssize_t bytes_read = recv(client_socket, username, sizeof(username) - 1, 0);
-            printf("Bytes recibidos: %zd\n", bytes_read);
-            if (bytes_read == -1) {
-                perror("Error al recibir el nombre del cliente");
-                result = 3;
-            } else {
-                // Eliminar el carácter de terminación null del nombre de usuario
-                username[strcspn(username, "\n")] = '\0';
-                printf("Nombre de usuario recibido: '%s'\n", username);
-            }
-            // Lógica para LISTUSERS
+            // Recibir nombre de usuario del cliente
+            
             result = list_connected_users(username, client_socket);
-        // Verificar si la operación es LISTCONTENT
+            
         } else if (operacion == 7) {
 
         // Verificar si la operación es GETFILE

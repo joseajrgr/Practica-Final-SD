@@ -158,18 +158,13 @@ class client :
 
             print(f"Enviando nombre de usuario: {client._user}")
             user_data = client._user.encode('utf-8') + b'\0'
-            bytes_sent = s.send(user_data)
-            print(f"Bytes enviados: {bytes_sent}")
-
+            s.sendall(user_data)
+            
             response = s.recv(1)
             if response == b'\x00':
                 print("c> LIST_USERS OK")
-                num_users = int(s.recv(1024).decode('utf-8'))
-                for _ in range(num_users):
-                    username = s.recv(1024).decode('utf-8')
-                    ip = s.recv(1024).decode('utf-8')
-                    port = s.recv(1024).decode('utf-8')
-                    print(f"{username} {ip} {port}")
+                num_users = s.recv(1024).decode('utf-8')
+                print(num_users)
             elif response == b'\x01':
                 print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
