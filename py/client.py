@@ -105,8 +105,28 @@ class client :
         return client.RC.ERROR
     
     @staticmethod
-    def  disconnect(user) :
-        #  Write your code here
+    def disconnect(user):
+        DISCONNECT = 3
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((client._server, client._port))
+            s.sendall(DISCONNECT.to_bytes(4, byteorder='big'))
+            user_data = user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c> DISCONNECT OK")
+                client._user = None
+                # Detener la ejecución del hilo y cerrar el puerto de escucha
+                # ...
+            elif response == b'\x01':
+                print("c> DISCONNECT FAIL / USER DOES NOT EXIST")
+            elif response == b'\x02':
+                print("c> DISCONNECT FAIL / USER NOT CONNECTED")
+            else:
+                print("c> DISCONNECT FAIL")
+
         return client.RC.ERROR
 
     @staticmethod
@@ -256,6 +276,8 @@ class client :
 
                     elif(line[0]=="QUIT") :
                         if (len(line) == 1) :
+                            if client._user is not None:
+                                client.disconnect(client._user)
                             break
                         else :
                             print("Syntax error. Use: QUIT")

@@ -122,6 +122,67 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
     return result;
 }
 
+int disconnect_user(char username[MAX_USERNAME_LENGTH]) {
+    int result = 0;
+
+    // Verificar si el usuario existe
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        result = 1;  // Usuario no existe
+    } else {
+        // Verificar si el usuario está conectado
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            result = 3;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
+                }
+            }
+            fclose(connections_file);
+
+            if (user_connected) {
+                // Eliminar al usuario del archivo de conexiones
+                remove_user_from_connections_file(username);
+                result = 0;  // Éxito
+            } else {
+                result = 2;  // Usuario no conectado
+            }
+        }
+    }
+
+    return result;
+}
+
+void remove_user_from_connections_file(char username[MAX_USERNAME_LENGTH]) {
+    FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+    FILE *temp_file = fopen("temp.txt", "w");
+    if (connections_file == NULL || temp_file == NULL) {
+        perror("Error al abrir los archivos");
+        return;
+    }
+
+    char line[MAX_USERNAME_LENGTH + 20];
+    while (fgets(line, sizeof(line), connections_file)) {
+        if (strncmp(line, username, strlen(username)) != 0) {
+            fputs(line, temp_file);
+        }
+    }
+
+    fclose(connections_file);
+    fclose(temp_file);
+
+    remove(CONNECTIONS_FILE);
+    rename("temp.txt", CONNECTIONS_FILE);
+}
 
 int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH], char description[MAX_FILE_LENGTH]) {
     int result = 0;

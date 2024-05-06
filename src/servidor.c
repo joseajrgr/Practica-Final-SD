@@ -70,7 +70,7 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
-
+            result = disconnect_user(username);
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
             printf("Operación PUBLISH\n");
@@ -79,15 +79,14 @@ void *handle_client(void *args) {
 
 
             printf("Nombre de usuario recibido: %s\n", username);
-            // Recibir nombre del fichero del cliente
-            memset(file_name, 0, sizeof(file_name));
+
             if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
-                perror("Error al recibir el nombre del fichero");
+                perror("Error al recibir el nombre del cliente");
                 result = 4;
             }
             printf("Nombre del fichero recibido: %s\n", file_name);
+
             // Recibir descripción del fichero del cliente
-            memset(description, 0, sizeof(description));
             if (recv(client_socket, description, sizeof(description), 0) == -1) {
                 perror("Error al recibir la descripción del fichero");
                 result = 4;

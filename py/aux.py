@@ -32,3 +32,8 @@ def handle_download_requests(server_socket):
         client_socket, address = server_socket.accept()
         # Lógica para atender las peticiones de descarga de ficheros
         # ...
+
+def stop_listen_thread():
+    # Lógica para detener la ejecución del hilo y cerrar el puerto de escucha
+    # ...
+    print("stop_listen_thread()")
