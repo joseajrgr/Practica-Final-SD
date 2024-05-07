@@ -458,3 +458,63 @@ int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENG
 
     return result;
 }
+
+int get_file_info(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH], char remote_ip[16], int *remote_port) {
+    int result = 0;
+
+    // Verificar si el fichero está publicado en el archivo "publicaciones.txt"
+    FILE *file = fopen("publicaciones.txt", "r");
+    if (file == NULL) {
+        perror("Error al abrir el archivo de publicaciones");
+        result = 2;
+    } else {
+        char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
+        int file_found = 0;
+        while (fgets(line, sizeof(line), file)) {
+            char *token = strtok(line, " ");
+            if (token != NULL && strcmp(token, username) == 0) {
+                token = strtok(NULL, " ");
+                if (token != NULL) {
+                    char *file_path = token;
+                    char *file_name_ptr = strrchr(file_path, '/');
+                    if (file_name_ptr != NULL && strcmp(file_name_ptr + 1, file_name) == 0) {
+                        file_found = 1;
+                        break;
+                    }
+                }
+            }
+        }
+        fclose(file);
+
+        if (file_found) {
+            // Obtener la IP y el puerto del cliente que publicó el fichero
+            FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+            if (connections_file == NULL) {
+                perror("Error al abrir el archivo de conexiones");
+                result = 2;
+            } else {
+                char line[MAX_USERNAME_LENGTH + 20];
+                while (fgets(line, sizeof(line), connections_file)) {
+                    char *token = strtok(line, " ");
+                    if (token != NULL && strcmp(token, username) == 0) {
+                        token = strtok(NULL, " ");
+                        if (token != NULL) {
+                            strcpy(remote_ip, token);
+                            token = strtok(NULL, " ");
+                            if (token != NULL) {
+                                *remote_port = atoi(token);
+                                result = 0;  // Éxito
+                                break;
+                            }
+                        }
+                    }
+                }
+                fclose(connections_file);
+            }
+        } else {
+            result = 1;  // Fichero no publicado
+        }
+    }
+
+    return result;
+}

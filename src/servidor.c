@@ -125,7 +125,29 @@ void *handle_client(void *args) {
             }
         // Verificar si la operación es GETFILE
         } else if (operacion == 8) {
+            char remote_user[MAX_USERNAME_LENGTH];
+            char file_name[MAX_FILE_LENGTH];
+            char remote_ip[16];
+            int remote_port;
 
+            if (recv(client_socket, remote_user, sizeof(remote_user), 0) == -1) {
+                perror("Error al recibir el nombre de usuario remoto");
+                result = 2;
+            } else if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
+                perror("Error al recibir el nombre del fichero");
+                result = 2;
+            } else {
+                result = get_file_info(remote_user, file_name, remote_ip, &remote_port);
+                if (result == 0) {
+                    char success_code = 0;
+                    send(client_socket, &success_code, sizeof(success_code), 0);
+                    send(client_socket, remote_ip, strlen(remote_ip) + 1, 0);
+                    send(client_socket, &remote_port, sizeof(remote_port), 0);
+                } else {
+                    char error_code = result;
+                    send(client_socket, &error_code, sizeof(error_code), 0);
+                }
+            }
         // Verificar si la operación no se conoce
         } else {
             printf("Operación desconocida: %d\n", operacion);

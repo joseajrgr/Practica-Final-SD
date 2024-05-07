@@ -18,7 +18,7 @@ class client :
     _server = None
     _port = -1
     _user = None
-
+    _listen_thread = None
     # ******************** METHODS *******************
 
 
@@ -66,14 +66,22 @@ class client :
 
     
     @staticmethod
-    def connect(user, listen_port=5555):
+    def connect(user, listen_port=None):
         if client._user is not None:
             print("c> USER ALREADY CONNECTED")
             return client.RC.USER_ERROR
         CONNECT = 2
         print("c> Connecting to server...")
-        listen_port = aux.find_free_port()
+        
+        # Obtener un puerto libre si no se proporciona uno
+        if listen_port is None:
+            listen_port = aux.find_free_port()
+        
         print("c> Port: " + str(listen_port))
+        
+        # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
+        listen_thread = aux.start_listen_thread(listen_port)
+        
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(CONNECT.to_bytes(4, byteorder='big'))
@@ -81,29 +89,30 @@ class client :
             s.sendall(user_data)
 
             # Enviar IP y puerto del cliente al servidor
-            print("c> Port: " + str(listen_port))
             ip = socket.gethostbyname(socket.gethostname())
             ip_data = ip.encode('utf-8') + b'\0'
             s.sendall(ip_data)
-            print("c> Port: " + str(listen_port))
             port_data = listen_port.to_bytes(4, byteorder='big')
+            time.sleep(1)
             s.sendall(port_data)
 
             response = s.recv(1)
             if response == b'\x00':
                 print("c> CONNECT OK")
                 client._user = user
-                # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
-                #aux.start_listen_thread(listen_port)
+                client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
             elif response == b'\x01':
                 print("c> CONNECT FAIL, USER DOES NOT EXIST")
+                aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
             elif response == b'\x02':
                 print("c> USER ALREADY CONNECTED")
                 client._user = user
+                client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
             else:
                 print("c> CONNECT FAIL")
+                aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
                 
-        return client.RC.ERROR
+        return client.RC.OK if response == b'\x00' else client.RC.ERROR
     
     @staticmethod
     def disconnect(user):
@@ -253,9 +262,45 @@ class client :
         return client.RC.ERROR
 
     @staticmethod
-    def  getfile(user,  remote_FileName,  local_FileName) :
-        #  Write your code here
-        return client.RC.ERROR
+    def getfile(user, remote_FileName, local_FileName):
+        GET_FILE = 8
+        result = 0
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((client._server, client._port))
+            s.sendall(GET_FILE.to_bytes(4, byteorder='big'))
+            s.sendall(user.encode('utf-8') + b'\0')
+            s.sendall(remote_FileName.encode('utf-8') + b'\0')
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c> GET_FILE OK")
+                remote_ip = s.recv(16).decode('utf-8').rstrip('\0')
+                remote_port = int.from_bytes(s.recv(4), byteorder='big')
+
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                    client_socket.connect((remote_ip, remote_port))
+                    client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
+
+                    with open(local_FileName, 'wb') as f:
+                        while True:
+                            data = client_socket.recv(1024)
+                            if not data:
+                                break
+                            f.write(data)
+
+                result = 0
+            elif response == b'\x01':
+                print("c> GET_FILE FAIL / FILE NOT EXIST")
+                result = 1
+            else:
+                print("c> GET_FILE FAIL")
+                result = 2
+
+        if result != 0 and os.path.exists(local_FileName):
+            os.remove(local_FileName)
+
+        return result
 
     # *
     # **

@@ -1,5 +1,6 @@
 import socket
 import sys
+import threading
 
 def readNumber(sock):
     a = ''
@@ -24,16 +25,33 @@ def start_listen_thread(port):
     server_socket.listen(1)
 
     # Crear el hilo para atender las peticiones de descarga
-    #thread = threading.Thread(target=handle_download_requests, args=(server_socket,))
-    #thread.start()
+    thread = threading.Thread(target=handle_download_requests, args=(server_socket,), daemon=True)
+    thread.start()
 
 def handle_download_requests(server_socket):
     while True:
         client_socket, address = server_socket.accept()
-        # Lógica para atender las peticiones de descarga de ficheros
-        # ...
+        file_name = client_socket.recv(MAX_FILE_LENGTH).decode('utf-8').rstrip('\0')
 
-def stop_listen_thread():
-    # Lógica para detener la ejecución del hilo y cerrar el puerto de escucha
-    # ...
+        file_path = os.path.join(USERS_DIRECTORY, client._user, file_name)
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as f:
+                while True:
+                    data = f.read(1024)
+                    if not data:
+                        break
+                    client_socket.sendall(data)
+        else:
+            print("File not found:", file_name)
+
+        client_socket.close()
+
+def stop_listen_thread(thread):
+    # Detener la ejecución del hilo
+    thread.join()
+
+    # Cerrar el socket de escucha
+    server_socket = thread._args[0]
+    server_socket.close()
+
     print("stop_listen_thread()")

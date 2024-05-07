@@ -13,5 +13,6 @@ int disconnect_user(char username[MAX_USERNAME_LENGTH]);
 void remove_user_from_connections_file(char username[MAX_USERNAME_LENGTH]);
 int list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_USERNAME_LENGTH], int client_socket);
 int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH]);
+int get_file_info(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH], char remote_ip[16], int *remote_port);
 
 #endif
