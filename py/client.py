@@ -198,8 +198,35 @@ class client :
         return client.RC.ERROR
 
     @staticmethod
-    def  listcontent(user) :
-        #  Write your code here
+    def listcontent(remote_user):
+        LIST_CONTENT = 7
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((client._server, client._port))
+            s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
+            user_data = client._user.encode('utf-8') + b'\0'
+            time.sleep(1)
+            print("Enviando nombre de usuario: ", client._user)
+            s.sendall(user_data)
+            remote_user_data = remote_user.encode('utf-8') + b'\0'
+            time.sleep(1)
+            print("Enviando nombre de usuario remoto: ", remote_user)
+            s.sendall(remote_user_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c> LIST_CONTENT OK")
+                num_files = s.recv(1024).decode('utf-8')
+                print(num_files)
+            elif response == b'\x01':
+                print("c> LIST_CONTENT FAIL, USER DOES NOT EXIST")
+            elif response == b'\x02':
+                print("c> LIST_CONTENT FAIL, USER NOT CONNECTED")
+            elif response == b'\x03':
+                print("c> LIST_CONTENT FAIL, REMOTE USER DOES NOT EXIST")
+            else:
+                print("c> LIST_CONTENT FAIL")
+
         return client.RC.ERROR
 
     @staticmethod

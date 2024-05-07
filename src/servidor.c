@@ -104,7 +104,18 @@ void *handle_client(void *args) {
             result = list_connected_users(username, client_socket);
             
         } else if (operacion == 7) {
+            char remote_user[MAX_USERNAME_LENGTH];
 
+            // Recibir nombre de usuario remoto del cliente
+            if (recv(client_socket, remote_user, sizeof(remote_user), 0) == -1) {
+                perror("Error al recibir el nombre de usuario remoto");
+                result = 4;
+            
+            } else {
+                printf("Nombre de usuario remoto: %s\n", remote_user);
+                // Lógica para LIST_CONTENT
+                result = list_user_content(username, remote_user, client_socket);
+            }
         // Verificar si la operación es GETFILE
         } else if (operacion == 8) {
 
@@ -139,6 +150,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
     fclose(file);
+
+    // Crear el archivo "publicaciones.txt" si no existe
+    FILE *publi = fopen("publicaciones.txt", "w");
+    if (publi == NULL) {
+        perror("Error al crear el archivo de conexiones");
+        exit(EXIT_FAILURE);
+    }
+    fclose(publi);
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
