@@ -167,8 +167,31 @@ class client :
         return client.RC.ERROR
 
     @staticmethod
-    def  delete(fileName) :
-        #  Write your code here
+    def delete(file_name):
+        DELETE = 5
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((client._server, client._port))
+            s.sendall(DELETE.to_bytes(4, byteorder='big'))
+
+            user_data = client._user.encode('utf-8') + b'\0'
+            s.sendall(user_data)
+            time.sleep(1)
+            file_name_data = file_name.encode('utf-8') + b'\0'
+            s.sendall(file_name_data)
+
+            response = s.recv(1)
+            if response == b'\x00':
+                print("c> DELETE OK")
+            elif response == b'\x01':
+                print("c> DELETE FAIL, USER DOES NOT EXIST")
+            elif response == b'\x02':
+                print("c> DELETE FAIL, USER NOT CONNECTED")
+            elif response == b'\x03':
+                print("c> DELETE FAIL, CONTENT NOT PUBLISHED")
+            else:
+                print("c> DELETE FAIL")
+
         return client.RC.ERROR
 
     @staticmethod

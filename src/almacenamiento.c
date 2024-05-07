@@ -380,3 +380,81 @@ int list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_U
 
     return result;
 }
+
+int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH]) {
+    int result = 0;
+
+    // Verificar si el usuario existe
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        result = 1;  // Usuario no existe
+    } else {
+        // Verificar si el usuario está conectado
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            result = 4;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
+                }
+            }
+            fclose(connections_file);
+
+            if (user_connected) {
+                // Verificar si el fichero está publicado en el archivo "publicaciones.txt"
+                FILE *file = fopen("publicaciones.txt", "r");
+                if (file == NULL) {
+                    perror("Error al abrir el archivo de publicaciones");
+                    result = 4;
+                } else {
+                    char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
+                    int file_found = 0;
+                    FILE *temp_file = fopen("temp.txt", "w");
+                    if (temp_file == NULL) {
+                        perror("Error al crear el archivo temporal");
+                        result = 4;
+                    } else {
+                        while (fgets(line, sizeof(line), file)) {
+                            char *token = strtok(line, " ");
+                            if (token != NULL && strcmp(token, username) == 0) {
+                                token = strtok(NULL, " ");
+                                if (token != NULL) {
+                                    char *file_path = token;
+                                    char *file_name_ptr = strrchr(file_path, '/');
+                                    if (file_name_ptr != NULL && strcmp(file_name_ptr + 1, file_name) == 0) {
+                                        file_found = 1;
+                                        continue;  // Omitir la línea correspondiente al fichero a eliminar
+                                    }
+                                }
+                            }
+                            fputs(line, temp_file);
+                        }
+                        fclose(file);
+                        fclose(temp_file);
+
+                        if (file_found) {
+                            remove("publicaciones.txt");
+                            rename("temp.txt", "publicaciones.txt");
+                            result = 0;  // Éxito
+                        } else {
+                            remove("temp.txt");
+                            result = 3;  // Fichero no publicado previamente
+                        }
+                    }
+                }
+            } else {
+                result = 2;  // Usuario no conectado
+            }
+        }
+    }
+
+    return result;
+}

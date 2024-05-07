@@ -96,7 +96,14 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {
+            char file_name[MAX_FILE_LENGTH];
 
+            if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
+                perror("Error al recibir el nombre del fichero");
+                result = 4;
+            } else {
+                result = delete_file(username, file_name);
+            }
         // Verificar si la operación es LISTUSERS
         } else if (operacion == 6) {
             // Recibir nombre de usuario del cliente
