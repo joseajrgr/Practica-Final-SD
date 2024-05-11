@@ -23,21 +23,32 @@ void *handle_client(void *args) {
     char username[MAX_USERNAME_LENGTH];
     int result = 0;
     char buffer[4];
+    char datetime[20];
     
     // Recibir código de operación
     if (recv(client_socket, buffer, sizeof(int32_t), 0) == -1) {
-        perror("Error al recibir el código de operación");
+        perror("s> Error al recibir el código de operación");
         result = 2;
+
     } else {
         operacion = ntohl(*(int*)buffer);
         
-        printf("Operación: %d\n", operacion);
+        printf("s> Operación: %d\n", operacion);
+        
+        // Recibir la fecha y la hora
+        if (recv(client_socket, datetime, 20, 0) == -1) {
+            perror("s> Error al recibir la fecha y la hora");
+            result = 2;
+        }
+        printf("s> Momento en el que se hizo el envío: %s\n", datetime);
+
         // Recibir nombre de usuario del cliente
         if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
-            perror("Error al recibir el nombre del cliente");
+            perror("s> Error al recibir el nombre del cliente");
             result = 2;
         }
         printf("s> %d FROM %s\n", operacion, username);
+        
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
             result = register_user(username);
@@ -53,18 +64,18 @@ void *handle_client(void *args) {
             
             // Recibir IP del cliente
             if (recv(client_socket, ip, sizeof(ip), 0) == -1) {
-                perror("Error al recibir la IP del cliente");
+                perror("s> Error al recibir la IP del cliente");
                 result = 2;
             }
-            printf("IP: %s\n", ip);
+            printf("s> IP: %s\n", ip);
             // Recibir puerto del cliente
             if (recv(client_socket, &port, sizeof(port), 0) == -1) {
-                perror("Error al recibir el puerto del cliente");
+                perror("s> Error al recibir el puerto del cliente");
                 result = 2;
             } else {
                 port = ntohl(port);
             }
-            printf("Puerto: %d\n", port);
+            printf("s> Puerto: %d\n", port);
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
 
@@ -73,24 +84,24 @@ void *handle_client(void *args) {
             result = disconnect_user(username);
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
-            printf("Operación PUBLISH\n");
+            printf("s> Operación PUBLISH\n");
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
             if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
-                perror("Error al recibir el nombre del cliente");
+                perror("s> Error al recibir el nombre del cliente");
                 result = 4;
             }
-            printf("Nombre del fichero recibido: %s\n", file_name);
+            printf("s> Nombre del fichero recibido: %s\n", file_name);
 
             // Recibir descripción del fichero del cliente
             if (recv(client_socket, description, sizeof(description), 0) == -1) {
-                perror("Error al recibir la descripción del fichero");
+                perror("s> Error al recibir la descripción del fichero");
                 result = 4;
             }
-            printf("Descripción del fichero recibida: %s\n", description);
+            printf("s> Descripción del fichero recibida: %s\n", description);
             
-            printf("Descripción: %s\n", description);
+            printf("s> Descripción: %s\n", description);
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
 
@@ -99,7 +110,7 @@ void *handle_client(void *args) {
             char file_name[MAX_FILE_LENGTH];
 
             if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
-                perror("Error al recibir el nombre del fichero");
+                perror("s> Error al recibir el nombre del fichero");
                 result = 4;
             } else {
                 result = delete_file(username, file_name);
@@ -115,11 +126,11 @@ void *handle_client(void *args) {
 
             // Recibir nombre de usuario remoto del cliente
             if (recv(client_socket, remote_user, sizeof(remote_user), 0) == -1) {
-                perror("Error al recibir el nombre de usuario remoto");
+                perror("s> Error al recibir el nombre de usuario remoto");
                 result = 4;
             
             } else {
-                printf("Nombre de usuario remoto: %s\n", remote_user);
+                printf("s> Nombre de usuario remoto: %s\n", remote_user);
                 // Lógica para LIST_CONTENT
                 result = list_user_content(username, remote_user, client_socket);
             }
@@ -131,17 +142,17 @@ void *handle_client(void *args) {
             int remote_port;
 
             if (recv(client_socket, remote_user, sizeof(remote_user), 0) == -1) {
-                perror("Error al recibir el nombre de usuario remoto");
+                perror("s> Error al recibir el nombre de usuario remoto");
                 result = 2;
             } else if (recv(client_socket, file_name, sizeof(file_name), 0) == -1) {
-                perror("Error al recibir el nombre del fichero");
+                perror("s> Error al recibir el nombre del fichero");
                 result = 2;
             } else {
                 result = get_file_info(remote_user, file_name, remote_ip, &remote_port);
                 if (result == 0) {
                     char success_code = 0;
-                    printf("IP remota: %s\n", remote_ip);
-                    printf("Puerto remoto: %d\n", remote_port);
+                    printf("s> IP remota: %s\n", remote_ip);
+                    printf("s> Puerto remoto: %d\n", remote_port);
                     remote_ip[15] = '\0';
                     char remote_port_str[6];
                     sprintf(remote_port_str, "%d", remote_port);
@@ -186,8 +197,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("s> init server %s:%d\n", "localhost", port);
-    printf("s>\n");
+    printf("s> init server %s:%d\ns>\n", "localhost", port);
+
     // Configurar servidor
     int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;

@@ -4,6 +4,9 @@ import socket
 import aux
 import time
 import os
+import zeep
+
+WSDL = "http://localhost:7900/?wsdl"
 
 class client :
 
@@ -30,6 +33,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(REGISTER.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
@@ -51,6 +61,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(UNREGISTER.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
@@ -83,6 +100,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(CONNECT.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
@@ -120,6 +144,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(DISCONNECT.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = user.encode('utf-8') + b'\0'
             s.sendall(user_data)
 
@@ -150,6 +181,12 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
 
             print("Enviando nombre de usuario: ", client._user)
             user_data = client._user.encode('utf-8') + b'\0'
@@ -187,6 +224,12 @@ class client :
             s.connect((client._server, client._port))
             s.sendall(DELETE.to_bytes(4, byteorder='big'))
 
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
             time.sleep(1)
@@ -215,6 +258,12 @@ class client :
             s.connect((client._server, client._port))
             s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
 
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             print(f"Enviando nombre de usuario: {client._user}")
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
@@ -240,6 +289,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
+
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+
             user_data = client._user.encode('utf-8') + b'\0'
             time.sleep(1)
             print("Enviando nombre de usuario: ", client._user)
@@ -273,6 +329,13 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(GET_FILE.to_bytes(4, byteorder='big'))
+            
+            client_ws = zeep.Client(wsdl=WSDL)
+            datetime = client_ws.service.get_datetime()
+            print("c> Momento del envío al servidor:", datetime)
+            datetime = datetime.encode('utf-8') + b'\0'
+            s.sendall(datetime)
+            
             user_data = client._user.encode('utf-8') + b'\0'
             time.sleep(1)
             print("Enviando nombre de usuario: ", client._user)

@@ -20,7 +20,7 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
     struct stat st = {0};
     if (stat(USERS_DIRECTORY, &st) == -1) {
         if (mkdir(USERS_DIRECTORY, 0777) == -1) {
-            perror("Error al crear la carpeta 'users'");
+            perror("s> Error al crear la carpeta 'users'");
             return 2;
         }
     }
@@ -33,14 +33,14 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
     if (stat(user_directory, &st) == -1) {
         // La carpeta no existe, crearla
         if (mkdir(user_directory, 0777) == -1) {
-            perror("Error al crear la carpeta del usuario");
+            perror("s> Error al crear la carpeta del usuario");
             result = 2;
         } else {
-            printf("Usuario registrado y carpeta creada: %s\n", user_directory);
+            printf("s> Usuario registrado y carpeta creada: %s\n", user_directory);
             result = 0;  // Registro exitoso
         }
     } else {
-        printf("El usuario ya está registrado: %s\n", username);
+        printf("s> El usuario ya está registrado: %s\n", username);
         result = 1;  // Usuario ya registrado
     }
 
@@ -57,15 +57,15 @@ int unregister_user(char username[MAX_USERNAME_LENGTH]) {
     // Verificar si la carpeta del usuario existe
     struct stat st = {0};
     if (stat(user_directory, &st) == -1) {
-        printf("Usuario no encontrado: %s\n", username);
+        printf("s> Usuario no encontrado: %s\n", username);
         result = 1;  // Usuario no encontrado
     } else {
         // La carpeta existe, eliminarla
         if (remove(user_directory) == -1) {
-            perror("Error al eliminar la carpeta del usuario");
+            perror("s> Error al eliminar la carpeta del usuario");
             result = 2;
         } else {
-            printf("Usuario eliminado: %s\n", username);
+            printf("s> Usuario eliminado: %s\n", username);
             result = 0;  // Baja exitosa
         }
     }
