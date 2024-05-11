@@ -114,7 +114,7 @@ void *handle_client(void *args) {
         } else if (operacion == 5) {
             char file_name[MAX_FILE_LENGTH];
 
-            if (recvMessage(client_socket, file_name, sizeof(file_name)) == -1) {
+            if (readLine(client_socket, file_name, sizeof(file_name)) == -1) {
                 perror("s> Error al recibir el nombre del fichero");
                 result = 4;
             } else {
@@ -131,7 +131,7 @@ void *handle_client(void *args) {
             char remote_user[MAX_USERNAME_LENGTH];
 
             // Recibir nombre de usuario remoto del cliente
-            if (recvMessage(client_socket, remote_user, sizeof(remote_user)) == -1) {
+            if (readLine(client_socket, remote_user, sizeof(remote_user)) == -1) {
                 perror("s> Error al recibir el nombre de usuario remoto");
                 result = 4;
             
@@ -148,10 +148,10 @@ void *handle_client(void *args) {
             char remote_ip[16];
             int remote_port;
 
-            if (recvMessage(client_socket, remote_user, sizeof(remote_user)) == -1) {
+            if (readLine(client_socket, remote_user, sizeof(remote_user)) == -1) {
                 perror("s> Error al recibir el nombre de usuario remoto");
                 result = 2;
-            } else if (recvMessage(client_socket, file_name, sizeof(file_name)) == -1) {
+            } else if (readLine(client_socket, file_name, sizeof(file_name)) == -1) {
                 perror("s> Error al recibir el nombre del fichero");
                 result = 2;
             } else {

@@ -2,7 +2,7 @@ from enum import Enum
 import argparse
 import socket
 import aux
-import time
+
 import os
 import zeep
 
@@ -191,12 +191,12 @@ class client :
             print("Enviando nombre de usuario: ", client._user)
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
-            time.sleep(1)
+            
             print("Enviando nombre del fichero: ", file_name)
             file_name_data = file_name.encode('utf-8') + b'\0'
             print("Datos del nombre del fichero:", file_name_data)  # Imprimir los datos enviados
             s.sendall(file_name_data)
-            time.sleep(1)
+            
             print("Enviando descripción del fichero: ", description)
             description_data = description.encode('utf-8') + b'\0'
             print("Datos de la descripción del fichero:", description_data)
@@ -232,7 +232,7 @@ class client :
 
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
-            time.sleep(1)
+        
             file_name_data = file_name.encode('utf-8') + b'\0'
             s.sendall(file_name_data)
 
@@ -308,11 +308,11 @@ class client :
             s.sendall(datetime)
 
             user_data = client._user.encode('utf-8') + b'\0'
-            time.sleep(1)
+            
             print("Enviando nombre de usuario: ", client._user)
             s.sendall(user_data)
             remote_user_data = remote_user.encode('utf-8') + b'\0'
-            time.sleep(1)
+            
             print("Enviando nombre de usuario remoto: ", remote_user)
             s.sendall(remote_user_data)
 
