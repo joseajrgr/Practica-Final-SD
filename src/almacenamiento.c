@@ -68,13 +68,21 @@ int unregister_user(char username[MAX_USERNAME_LENGTH]) {
     // Construir la ruta de la carpeta del usuario
     char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
     snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
-
+    char file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
     // Verificar si la carpeta del usuario existe
     struct stat st = {0};
     if (stat(user_directory, &st) == -1) {
         printf("s> Usuario no encontrado: %s\n", username);
         result = 1;  // Usuario no encontrado
     } else {
+        // Construir la ruta al archivo
+        snprintf(file_path, sizeof(file_path), "%s/publicaciones.txt", user_directory);
+
+        // Eliminar el archivo
+        if (remove(file_path) == -1) {
+            perror("Error al eliminar el archivo");
+            return 1;
+        }
         // La carpeta existe, eliminarla
         if (remove(user_directory) == -1) {
             perror("s> Error al eliminar la carpeta del usuario");
