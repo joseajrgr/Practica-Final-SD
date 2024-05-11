@@ -317,6 +317,7 @@ class client :
             s.sendall(remote_user_data)
 
             response = s.recv(1)
+            print("Respuesta del servidor:", response)
             if response == b'\x00':
                 print("c> LIST_CONTENT OK")
                 num_files = s.recv(1024).decode('utf-8')

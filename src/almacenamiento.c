@@ -13,6 +13,8 @@
 #define CONNECTIONS_FILE "conexiones.txt"
 #define USERS_DIRECTORY "servidor"
 
+
+
 int register_user(char username[MAX_USERNAME_LENGTH]) {
     int result = 0;
 
@@ -38,6 +40,19 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
         } else {
             printf("s> Usuario registrado y carpeta creada: %s\n", user_directory);
             result = 0;  // Registro exitoso
+
+            // Construir la ruta al archivo de publicaciones del usuario
+            char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
+            snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
+
+            // Crear el archivo de publicaciones del usuario
+            FILE *file = fopen(publications_file_path, "w");
+            if (file == NULL) {
+                perror("s> Error al crear el archivo de publicaciones del usuario");
+                result = 4;  // Error al crear el archivo
+            } else {
+                fclose(file);  // Cerrar el archivo después de crearlo
+            }
         }
     } else {
         printf("s> El usuario ya está registrado: %s\n", username);
@@ -212,100 +227,19 @@ int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LEN
             fclose(connections_file);
 
             if (user_connected) {
-                // Verificar si el fichero existe en la carpeta del usuario
-                char file_path[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + sizeof(USERS_DIRECTORY) + 4];
-                snprintf(file_path, sizeof(file_path), "%s", file_name);
-                 FILE *file = fopen("publicaciones.txt", "r");
+                // Construir la ruta al archivo de publicaciones del usuario
+                char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
+                snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
+
+                // Abrir el archivo de publicaciones del usuario en modo de adición
+                FILE *file = fopen(publications_file_path, "a");
                 if (file == NULL) {
-                    perror("Error al abrir el archivo de publicaciones");
+                    perror("Error al abrir el archivo de publicaciones del usuario");
                     result = 4;
                 } else {
-                    char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
-                    int file_already_published = 0;
-                    while (fgets(line, sizeof(line), file)) {
-                        char *token = strtok(line, " ");
-                        if (token != NULL && strcmp(token, username) == 0) {
-                            token = strtok(NULL, " ");
-                            if (token != NULL && strcmp(token, file_path) == 0) {
-                                file_already_published = 1;
-                                break;
-                            }
-                        }
-                    }
+                    // Escribir la publicación en el archivo del usuario
+                    fprintf(file, "%s %s %s\n", username, file_name, description);
                     fclose(file);
-
-                    if (file_already_published) {
-                        result = 3;  // Fichero ya publicado
-                    } else {
-                        // Guardar la información en el archivo "publicaciones.txt"
-                        file = fopen("publicaciones.txt", "a");
-                        if (file == NULL) {
-                            perror("Error al abrir el archivo de publicaciones");
-                            result = 4;
-                        } else {
-                            fprintf(file, "%s %s %s\n", username, file_path, description);
-                            fclose(file);
-                            result = 0;  // Éxito
-                        }
-                    }
-                }
-            } else {
-                result = 2;  // Usuario no conectado
-            }
-        }
-    }
-
-    return result;
-}
-int list_connected_users(char username[MAX_USERNAME_LENGTH], int client_socket) {
-    int result = 0;
-
-    // Verificar si el usuario existe
-    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
-    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
-    struct stat st = {0};
-    if (stat(user_directory, &st) == -1) {
-        result = 1;  // Usuario no existe
-    } else {
-        // Verificar si el usuario está conectado
-        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
-        if (connections_file == NULL) {
-            perror("Error al abrir el archivo de conexiones");
-            result = 3;
-        } else {
-            char line[MAX_USERNAME_LENGTH + 20];
-            int user_connected = 0;
-            while (fgets(line, sizeof(line), connections_file)) {
-                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                if (strncmp(line, username, strlen(username)) == 0) {
-                    user_connected = 1;
-                    break;
-                }
-            }
-            fclose(connections_file);
-
-            if (user_connected) {
-                // Enviar código de éxito al cliente
-                char success_code = 0;
-                send(client_socket, &success_code, sizeof(success_code), 0);
-
-                // Leer el contenido del archivo de conexiones y enviarlo al cliente
-                connections_file = fopen(CONNECTIONS_FILE, "r");
-                if (connections_file == NULL) {
-                    perror("Error al abrir el archivo de conexiones");
-                    result = 3;
-                } else {
-                    char file_contents[1024] = {0};
-                    while (fgets(line, sizeof(line), connections_file)) {
-                        line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                        strcat(file_contents, line);
-                        strcat(file_contents, "\n");
-                    }
-                    fclose(connections_file);
-
-                    // Enviar el contenido del archivo al cliente
-                    send(client_socket, file_contents, strlen(file_contents), 0);
-
                     result = 0;  // Éxito
                 }
             } else {
@@ -316,23 +250,22 @@ int list_connected_users(char username[MAX_USERNAME_LENGTH], int client_socket) 
 
     return result;
 }
-
-
-int list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_USERNAME_LENGTH], int client_socket) {
-    int result = 0;
+Respuesta list_connected_users(char username[MAX_USERNAME_LENGTH]) {
+    Respuesta respuesta;
+    respuesta.result = 0;
 
     // Verificar si el usuario existe
     char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
     snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
     struct stat st = {0};
     if (stat(user_directory, &st) == -1) {
-        result = 1;  // Usuario no existe
+        respuesta.result = 1;  // Usuario no existe
     } else {
         // Verificar si el usuario está conectado
         FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
         if (connections_file == NULL) {
             perror("Error al abrir el archivo de conexiones");
-            result = 4;
+            respuesta.result = 3;
         } else {
             char line[MAX_USERNAME_LENGTH + 20];
             int user_connected = 0;
@@ -346,61 +279,104 @@ int list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_U
             fclose(connections_file);
 
             if (user_connected) {
-                // Verificar si el usuario remoto existe
-                char remote_user_directory[sizeof(USERS_DIRECTORY) + 3];
-                snprintf(remote_user_directory, sizeof(remote_user_directory), "%s/%s", USERS_DIRECTORY, remote_user);
-                if (stat(remote_user_directory, &st) == -1) {
-                    result = 3;  // Usuario remoto no existe
+                // Leer el contenido del archivo de conexiones y enviarlo al cliente
+                connections_file = fopen(CONNECTIONS_FILE, "r");
+                if (connections_file == NULL) {
+                    perror("Error al abrir el archivo de conexiones");
+                    respuesta.result = 3;
                 } else {
-                    // Leer el contenido del archivo "publicaciones.txt"
-                    FILE *file = fopen("publicaciones.txt", "r");
-                    if (file == NULL) {
-                        perror("Error al abrir el archivo de publicaciones");
-                        result = 4;
-                    } else {
-                        char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
-                        char file_contents[1024] = {0};
+                    char file_contents[1024] = {0};
+                    while (fgets(line, sizeof(line), connections_file)) {
+                        line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                        strcat(file_contents, line);
+                        strcat(file_contents, "\n");
+                    }
+                    fclose(connections_file);
 
-                        while (fgets(line, sizeof(line), file)) {
-                            line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                            char *token = strtok(line, " ");
-                            if (token != NULL && strcmp(token, remote_user) == 0) {
-                                token = strtok(NULL, " ");
-                                if (token != NULL) {
-                                    char file_name[MAX_FILE_LENGTH];
-                                    strcpy(file_name, token);
-                                    token = strtok(NULL, "");
-                                    if (token != NULL) {
-                                        char description[MAX_FILE_LENGTH + 4];
-                                        snprintf(description, sizeof(description), "\"%s\"", token);
-                                        strcat(file_contents, file_name);
-                                        strcat(file_contents, " ");
-                                        strcat(file_contents, description);
-                                        strcat(file_contents, "\n");
-                                    }
-                                }
-                            }
-                        }
-                        fclose(file);
-
-                        // Enviar código de éxito al cliente
-                        char success_code = 0;
-                        send(client_socket, &success_code, sizeof(success_code), 0);
-
-                        // Enviar el contenido del archivo al cliente
-                        send(client_socket, file_contents, strlen(file_contents), 0);
-
-                        result = 0;  // Éxito
-                    }}
+                    
+                    respuesta.texto = file_contents;
+                    printf("s> Contenido del archivo de conexiones: %s\n", file_contents);
+                    printf("s> Respuesta: %s\n", respuesta.texto);
+                    respuesta.result = 0;  // Éxito
+                }
             } else {
-                result = 2;  // Usuario no conectado
+                respuesta.result = 2;  // Usuario no conectado
             }
         }
     }
 
-    return result;
+    return respuesta;
 }
 
+
+Respuesta list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_USERNAME_LENGTH]) {
+    Respuesta respuesta;
+    respuesta.result = 0;
+    
+
+    // Verificar si el usuario existe
+    char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    struct stat st = {0};
+    if (stat(user_directory, &st) == -1) {
+        respuesta.result = 1;  // Usuario no existe
+    } else {
+        // Verificar si el usuario está conectado
+        FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
+        if (connections_file == NULL) {
+            perror("Error al abrir el archivo de conexiones");
+            respuesta.result = 4;
+        } else {
+            char line[MAX_USERNAME_LENGTH + 20];
+            int user_connected = 0;
+            while (fgets(line, sizeof(line), connections_file)) {
+                line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                if (strncmp(line, username, strlen(username)) == 0) {
+                    user_connected = 1;
+                    break;
+                }
+            }
+            fclose(connections_file);
+
+            if (user_connected) {
+                // Construir la ruta al archivo "publicaciones.txt" del usuario
+                char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
+                snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
+                printf("s> Ruta del archivo de publicaciones: %s\n", publications_file_path);
+                // Abrir el archivo de publicaciones del usuario en modo de lectura
+                FILE *file = fopen(publications_file_path, "r");
+                if (file == NULL) {
+                    perror("Error al abrir el archivo de publicaciones");
+                    respuesta.result = 4;
+                } else {
+                    char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
+                    char file_contents[1024] = {0};
+
+                    // Leer el contenido del archivo y filtrar por remote_user
+                    while (fgets(line, sizeof(line), file)) {
+                        line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
+                        char *token = strtok(line, " ");
+                        if (token!= NULL && strcmp(token, remote_user) == 0) {
+                            strcat(file_contents, line);
+                            strcat(file_contents, "\n");
+                        }
+                    }
+                    fclose(file);
+
+                    
+                    respuesta.texto = file_contents;
+                    printf("s> Contenido del archivo de publicaciones: %s\n", file_contents);
+                    printf("s> Respuesta: %s\n", respuesta.texto);
+                    respuesta.result = 0;  // Éxito
+                }
+            } else {
+                respuesta.result = 2;  // Usuario no conectado
+            }
+        }
+    }
+
+    return respuesta;
+}
 int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENGTH]) {
     int result = 0;
 

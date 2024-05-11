@@ -27,6 +27,7 @@ void *handle_client(void *args) {
     char username[MAX_USERNAME_LENGTH];
     int32_t operacion = -1;
     int32_t result = 0;
+    Respuesta respuesta;
     
     
     // Recibir código de operación
@@ -56,11 +57,18 @@ void *handle_client(void *args) {
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
             result = register_user(username);
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
 
         // Verificar si la operación es UNREGISTER
         } else if (operacion == 1) {
             result = unregister_user(username);
-                      
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
             char ip[MAX_IP_LENGTH];
@@ -82,11 +90,17 @@ void *handle_client(void *args) {
             printf("s> Puerto: %d\n", port);
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
-
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
             result = disconnect_user(username);
-        
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
             printf("s> Operación PUBLISH\n");
@@ -109,7 +123,10 @@ void *handle_client(void *args) {
             printf("s> Descripción: %s\n", description);
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
-
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {
             char file_name[MAX_FILE_LENGTH];
@@ -120,12 +137,19 @@ void *handle_client(void *args) {
             } else {
                 result = delete_file(username, file_name);
             }
-        
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es LIST_USERS
         } else if (operacion == 6) {
             // Recibir nombre de usuario del cliente  
-            result = list_connected_users(username, client_socket);
-            
+            respuesta = list_connected_users(username);
+            result = respuesta.result;
+            // Enviar resultado al cliente
+            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
+                perror("Error al enviar el resultado al cliente");
+            }
         // Verificar si la operación es LIST_CONTENT
         } else if (operacion == 7) {
             char remote_user[MAX_USERNAME_LENGTH];
@@ -138,7 +162,11 @@ void *handle_client(void *args) {
             } else {
                 printf("s> Nombre de usuario remoto: %s\n", remote_user);
                 // Lógica para LIST_CONTENT
-                result = list_user_content(username, remote_user, client_socket);
+                
+                respuesta = list_user_content(username, remote_user);
+                result = respuesta.result;
+                printf("texto: %s\n", respuesta.texto);
+                printf("s> Resultado de la operación LIST_CONTENT: %d\n", result);
             }
         
         // Verificar si la operación es GET_FILE
@@ -184,6 +212,16 @@ void *handle_client(void *args) {
     // Enviar resultado al cliente
     if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
         perror("Error al enviar el resultado al cliente");
+    }
+
+    if (result == 0) {
+        if (operacion == 6 || operacion == 7) {
+            strcat(respuesta.texto, "\n");
+            printf("s> Enviando respuesta al cliente\n");
+            sendMessage(client_socket, respuesta.texto, strlen(respuesta.texto)+1);
+        } else {
+            printf("s> Operación completada con éxito\n");
+        }
     }
 
     // Cerrar conexión con el cliente
