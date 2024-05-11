@@ -3,6 +3,7 @@ import argparse
 import socket
 import aux
 import time
+import os
 
 class client :
 
@@ -67,9 +68,6 @@ class client :
     
     @staticmethod
     def connect(user, listen_port=None):
-        if client._user is not None:
-            print("c> USER ALREADY CONNECTED")
-            return client.RC.USER_ERROR
         CONNECT = 2
         print("c> Connecting to server...")
         
@@ -91,6 +89,7 @@ class client :
             # Enviar IP y puerto del cliente al servidor
             ip = socket.gethostbyname(socket.gethostname())
             ip_data = ip.encode('utf-8') + b'\0'
+            time.sleep(1)
             s.sendall(ip_data)
             port_data = listen_port.to_bytes(4, byteorder='big')
             time.sleep(1)
@@ -142,6 +141,11 @@ class client :
     @staticmethod
     def publish(file_name, description):
         PUBLISH = 4
+        
+        # Verificar si el fichero existe en la ruta del cliente
+        if not os.path.exists("./" + file_name):
+            print("c> PUBLISH FAIL, FILE DOES NOT EXIST")
+            return client.RC.ERROR
         
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))

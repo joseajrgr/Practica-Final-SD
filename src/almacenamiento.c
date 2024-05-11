@@ -11,7 +11,7 @@
 #define MAX_FILE_LENGTH 256
 #define USERS_FILE "usuarios.txt"
 #define CONNECTIONS_FILE "conexiones.txt"
-#define USERS_DIRECTORY "users"
+#define USERS_DIRECTORY "servidor"
 
 int register_user(char username[MAX_USERNAME_LENGTH]) {
     int result = 0;
@@ -214,20 +214,40 @@ int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LEN
             if (user_connected) {
                 // Verificar si el fichero existe en la carpeta del usuario
                 char file_path[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + sizeof(USERS_DIRECTORY) + 4];
-                snprintf(file_path, sizeof(file_path), "%s/%s/%s", USERS_DIRECTORY, username, file_name);
-                if (access(file_path, F_OK) != -1) {
-                    // El fichero existe, guardar la información en el archivo "publicaciones.txt"
-                    FILE *file = fopen("publicaciones.txt", "a");
-                    if (file == NULL) {
-                        perror("Error al abrir el archivo de publicaciones");
-                        result = 4;
-                    } else {
-                        fprintf(file, "%s %s %s\n", username, file_path, description);
-                        fclose(file);
-                        result = 0;  // Éxito
-                    }
+                snprintf(file_path, sizeof(file_path), "%s", file_name);
+                 FILE *file = fopen("publicaciones.txt", "r");
+                if (file == NULL) {
+                    perror("Error al abrir el archivo de publicaciones");
+                    result = 4;
                 } else {
-                    result = 3;  // Fichero no encontrado
+                    char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
+                    int file_already_published = 0;
+                    while (fgets(line, sizeof(line), file)) {
+                        char *token = strtok(line, " ");
+                        if (token != NULL && strcmp(token, username) == 0) {
+                            token = strtok(NULL, " ");
+                            if (token != NULL && strcmp(token, file_path) == 0) {
+                                file_already_published = 1;
+                                break;
+                            }
+                        }
+                    }
+                    fclose(file);
+
+                    if (file_already_published) {
+                        result = 3;  // Fichero ya publicado
+                    } else {
+                        // Guardar la información en el archivo "publicaciones.txt"
+                        file = fopen("publicaciones.txt", "a");
+                        if (file == NULL) {
+                            perror("Error al abrir el archivo de publicaciones");
+                            result = 4;
+                        } else {
+                            fprintf(file, "%s %s %s\n", username, file_path, description);
+                            fclose(file);
+                            result = 0;  // Éxito
+                        }
+                    }
                 }
             } else {
                 result = 2;  // Usuario no conectado
@@ -327,7 +347,7 @@ int list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user[MAX_U
 
             if (user_connected) {
                 // Verificar si el usuario remoto existe
-                char remote_user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
+                char remote_user_directory[sizeof(USERS_DIRECTORY) + 3];
                 snprintf(remote_user_directory, sizeof(remote_user_directory), "%s/%s", USERS_DIRECTORY, remote_user);
                 if (stat(remote_user_directory, &st) == -1) {
                     result = 3;  // Usuario remoto no existe
@@ -426,13 +446,9 @@ int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENG
                             char *token = strtok(line, " ");
                             if (token != NULL && strcmp(token, username) == 0) {
                                 token = strtok(NULL, " ");
-                                if (token != NULL) {
-                                    char *file_path = token;
-                                    char *file_name_ptr = strrchr(file_path, '/');
-                                    if (file_name_ptr != NULL && strcmp(file_name_ptr + 1, file_name) == 0) {
-                                        file_found = 1;
-                                        continue;  // Omitir la línea correspondiente al fichero a eliminar
-                                    }
+                                if (token != NULL && strcmp(token, file_name) == 0) {
+                                    file_found = 1;
+                                    continue;  // Omitir la línea correspondiente al fichero a eliminar
                                 }
                             }
                             fputs(line, temp_file);
