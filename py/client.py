@@ -23,6 +23,7 @@ class client :
     _port = -1
     _user = None
     _listen_thread = None
+    _users_info = {}
     # ******************** METHODS *******************
 
 
@@ -273,6 +274,17 @@ class client :
                 print("c> LIST_USERS OK")
                 num_users = s.recv(1024).decode('utf-8')
                 print(num_users)
+                # Procesar la información recibida y almacenarla en _users_info
+                for line in num_users.split('\n'):
+                    line = line.strip() # Eliminar espacios en blanco al inicio y al final
+                    if line:  # Ignorar líneas vacías
+                        parts = line.split()
+                        if len(parts) == 3:  # Verificar que la línea tenga exactamente tres partes
+                            username, ip, port = parts
+                            client._users_info[username] = (ip, int(port))
+                        else:
+                            print(f"Error: Unexpected format in line '{line}'")
+                print(client._users_info)
             elif response == b'\x01':
                 print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
             elif response == b'\x02':
@@ -325,54 +337,46 @@ class client :
     def getfile(user, remote_FileName, local_FileName):
         GET_FILE = 8
         result = 0
+        if client._user is None:
+            print("c> GET_FILE FAIL, USER NOT CONNECTED")
+            return 2
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(GET_FILE.to_bytes(4, byteorder='big'))
-            
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
-            
-            user_data = client._user.encode('utf-8') + b'\0'
-            time.sleep(1)
-            print("Enviando nombre de usuario: ", client._user)
-            s.sendall(user_data)
-            time.sleep(0.5)
-            s.sendall(user.encode('utf-8') + b'\0')
-            time.sleep(0.5)
-            s.sendall(remote_FileName.encode('utf-8') + b'\0')
+        # Verificar si el usuario existe en el diccionario
+        if user in client._users_info:
+            # Obtener la tupla (IP, puerto) asociada al usuario
+            ip, port = client._users_info[user]
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                    client_socket.connect((ip, port))
+                    client_ws = zeep.Client(wsdl=WSDL)
+                    datetime = client_ws.service.get_datetime()
+                    print("c> Momento del envío al servidor:", datetime)
+                    datetime = datetime.encode('utf-8') + b'\0'
+                    client_socket.sendall(datetime)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> GET_FILE OK")
-                data = s.recv(22).decode('utf-8').rstrip('\0')
-                remote_ip, remote_port = data.split(':')
-                remote_ip = remote_ip.rstrip('\0')
-                print("c> Remote IP: ", remote_ip)
-                remote_port = int(remote_port)
-                print("c> Remote Port: ", remote_port)
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-                    client_socket.connect((remote_ip, remote_port))
+                    
                     client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
 
+                    response = client_socket.recv(1)
+                    if response == b'\x00':
+                        with open(local_FileName, 'wb') as f:
+                            while True:
+                                data = client_socket.recv(1024)
+                                if not data:
+                                    break
+                                f.write(data)
+                        result = 0
+                        print("c> GET_FILE OK")
+                    elif response == b'\x01':
+                        print("c> GET_FILE FAIL / FILE NOT EXIST")
+                        return 1
+                    else:
+                        print("c> GET_FILE FAIL")
+                        return 2
 
-                    with open(local_FileName, 'wb') as f:
-                        while True:
-                            data = client_socket.recv(1024)
-                            if not data:
-                                break
-                            f.write(data)
 
-                result = 0
-            elif response == b'\x01':
-                print("c> GET_FILE FAIL / FILE NOT EXIST")
-                result = 1
-            else:
-                print("c> GET_FILE FAIL")
-                result = 2
+        else:
+            print("c> GET_FILE FAIL, REMOTE USER DOES NOT EXIST")
+            return 2
 
         if result != 0 and os.path.exists(local_FileName):
             os.remove(local_FileName)

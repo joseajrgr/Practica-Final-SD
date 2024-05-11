@@ -34,17 +34,22 @@ def handle_download_requests(server_socket):
     while True:
         MAX_FILE_LENGTH = 256
         client_socket, address = server_socket.accept()
+        fecha = client_socket.recv(20)
         file_name = client_socket.recv(MAX_FILE_LENGTH).decode('utf-8').rstrip('\0')
         
         file_path = os.path.join("./", file_name)
         if os.path.exists(file_path):
+            client_socket.sendall(int(0).to_bytes(1, byteorder='big'))
             with open(file_path, 'rb') as f:
                 while True:
                     data = f.read(1024)
                     if not data:
                         break
+                    
                     client_socket.sendall(data)
+
         else:
+            client_socket.sendall(int(1).to_bytes(1, byteorder='big'))
             print("File not found:", file_name)
 
         
