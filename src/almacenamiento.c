@@ -411,8 +411,11 @@ int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENG
             fclose(connections_file);
 
             if (user_connected) {
+                // Construir la ruta al archivo "publicaciones.txt" del usuario
+                char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
+                snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
                 // Verificar si el fichero está publicado en el archivo "publicaciones.txt"
-                FILE *file = fopen("publicaciones.txt", "r");
+                FILE *file = fopen(publications_file_path, "r");
                 if (file == NULL) {
                     perror("Error al abrir el archivo de publicaciones");
                     result = 4;
@@ -439,8 +442,8 @@ int delete_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LENG
                         fclose(temp_file);
 
                         if (file_found) {
-                            remove("publicaciones.txt");
-                            rename("temp.txt", "publicaciones.txt");
+                            remove(publications_file_path);
+                            rename("temp.txt", publications_file_path);
                             result = 0;  // Éxito
                         } else {
                             remove("temp.txt");
