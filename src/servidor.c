@@ -9,7 +9,7 @@
 #define MAX_USERNAME_LENGTH 256
 #define MAX_FILE_LENGTH 256
 #define CONNECTIONS_FILE "conexiones.txt"
-#define PORT 5500
+
 
 // Estructura para pasar argumentos al hilo del cliente
 struct client_thread_args {
@@ -37,7 +37,7 @@ void *handle_client(void *args) {
             perror("Error al recibir el nombre del cliente");
             result = 2;
         }
-
+        printf("s> %d FROM %s\n", operacion, username);
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
             result = register_user(username);
@@ -163,7 +163,7 @@ void *handle_client(void *args) {
             result = 3;
         }      
     }
-
+    printf("s>\n");
     // Enviar resultado al cliente
     if (send(client_socket, &result, sizeof(result), 0) == -1) {
         perror("Error al enviar el resultado al cliente");
@@ -175,7 +175,19 @@ void *handle_client(void *args) {
     pthread_exit(NULL);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc!= 3 || strcmp(argv[1], "-p")!= 0) {
+        printf("Uso: %s -p <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int port = atoi(argv[2]);
+    if (port <= 0 || port > 65535) {
+        printf("Puerto inválido. Debe estar entre 1 y 65535.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("s> init server %s:%d\n", "localhost", port);
+    printf("s>\n");
     // Configurar servidor
     int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;
@@ -205,7 +217,7 @@ int main() {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(PORT);  // Puerto del servidor
+    server_addr.sin_port = htons(port);  // Puerto del servidor
     memset(&(server_addr.sin_zero), '\0', 8);
 
     if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
