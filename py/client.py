@@ -114,10 +114,8 @@ class client :
             # Enviar IP y puerto del cliente al servidor
             ip = socket.gethostbyname(socket.gethostname())
             ip_data = ip.encode('utf-8') + b'\0'
-            time.sleep(1)
             s.sendall(ip_data)
             port_data = listen_port.to_bytes(4, byteorder='big')
-            time.sleep(1)
             s.sendall(port_data)
 
             response = s.recv(1)
@@ -160,7 +158,8 @@ class client :
                 print("c> DISCONNECT OK")
                 client._user = None
                 # Detener la ejecución del hilo y cerrar el puerto de escucha
-                # ...
+                aux.stop_listen_thread(client._listen_thread)
+                client._listen_thread = None
             elif response == b'\x01':
                 print("c> DISCONNECT FAIL / USER DOES NOT EXIST")
             elif response == b'\x02':

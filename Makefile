@@ -8,7 +8,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pthread
 
 # Archivos fuente
-SRCS = src/servidor.c src/almacenamiento.c
+SRCS = src/servidor.c src/almacenamiento.c src/sockets.c
 
 # Objetos generados
 OBJS = $(SRCS:src/%.c=obj/%.o)
