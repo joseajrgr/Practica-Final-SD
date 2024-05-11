@@ -273,18 +273,28 @@ class client :
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(GET_FILE.to_bytes(4, byteorder='big'))
+            user_data = client._user.encode('utf-8') + b'\0'
+            time.sleep(1)
+            print("Enviando nombre de usuario: ", client._user)
+            s.sendall(user_data)
+            time.sleep(0.5)
             s.sendall(user.encode('utf-8') + b'\0')
+            time.sleep(0.5)
             s.sendall(remote_FileName.encode('utf-8') + b'\0')
 
             response = s.recv(1)
             if response == b'\x00':
                 print("c> GET_FILE OK")
-                remote_ip = s.recv(16).decode('utf-8').rstrip('\0')
-                remote_port = int.from_bytes(s.recv(4), byteorder='big')
-
+                data = s.recv(22).decode('utf-8').rstrip('\0')
+                remote_ip, remote_port = data.split(':')
+                remote_ip = remote_ip.rstrip('\0')
+                print("c> Remote IP: ", remote_ip)
+                remote_port = int(remote_port)
+                print("c> Remote Port: ", remote_port)
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
                     client_socket.connect((remote_ip, remote_port))
                     client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
+
 
                     with open(local_FileName, 'wb') as f:
                         while True:

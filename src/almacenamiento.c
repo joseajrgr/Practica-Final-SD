@@ -490,13 +490,9 @@ int get_file_info(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LE
             char *token = strtok(line, " ");
             if (token != NULL && strcmp(token, username) == 0) {
                 token = strtok(NULL, " ");
-                if (token != NULL) {
-                    char *file_path = token;
-                    char *file_name_ptr = strrchr(file_path, '/');
-                    if (file_name_ptr != NULL && strcmp(file_name_ptr + 1, file_name) == 0) {
-                        file_found = 1;
-                        break;
-                    }
+                if (token != NULL && strcmp(token, file_name) == 0) {
+                    file_found = 1;
+                    break;
                 }
             }
         }

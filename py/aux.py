@@ -1,6 +1,8 @@
 import socket
 import sys
 import threading
+import os
+
 
 def readNumber(sock):
     a = ''
@@ -30,10 +32,11 @@ def start_listen_thread(port):
 
 def handle_download_requests(server_socket):
     while True:
+        MAX_FILE_LENGTH = 256
         client_socket, address = server_socket.accept()
         file_name = client_socket.recv(MAX_FILE_LENGTH).decode('utf-8').rstrip('\0')
-
-        file_path = os.path.join(USERS_DIRECTORY, client._user, file_name)
+        print("File requested:", file_name)
+        file_path = os.path.join("./", file_name)
         if os.path.exists(file_path):
             with open(file_path, 'rb') as f:
                 while True:

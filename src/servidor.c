@@ -140,9 +140,18 @@ void *handle_client(void *args) {
                 result = get_file_info(remote_user, file_name, remote_ip, &remote_port);
                 if (result == 0) {
                     char success_code = 0;
+                    printf("IP remota: %s\n", remote_ip);
+                    printf("Puerto remoto: %d\n", remote_port);
+                    remote_ip[15] = '\0';
+                    char remote_port_str[6];
+                    sprintf(remote_port_str, "%d", remote_port);
+                    char delimiter = ':';
                     send(client_socket, &success_code, sizeof(success_code), 0);
                     send(client_socket, remote_ip, strlen(remote_ip) + 1, 0);
-                    send(client_socket, &remote_port, sizeof(remote_port), 0);
+                    send(client_socket, &delimiter, sizeof(delimiter), 0);
+                    send(client_socket, remote_port_str, strlen(remote_port_str) + 1, 0);
+
+
                 } else {
                     char error_code = result;
                     send(client_socket, &error_code, sizeof(error_code), 0);
