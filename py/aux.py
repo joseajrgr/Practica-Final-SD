@@ -35,7 +35,7 @@ def handle_download_requests(server_socket):
         MAX_FILE_LENGTH = 256
         client_socket, address = server_socket.accept()
         file_name = client_socket.recv(MAX_FILE_LENGTH).decode('utf-8').rstrip('\0')
-        print("File requested:", file_name)
+        
         file_path = os.path.join("./", file_name)
         if os.path.exists(file_path):
             with open(file_path, 'rb') as f:
@@ -47,7 +47,10 @@ def handle_download_requests(server_socket):
         else:
             print("File not found:", file_name)
 
+        
         client_socket.close()
+        
+
 
 def stop_listen_thread(thread):
     # Detener la ejecución del hilo
