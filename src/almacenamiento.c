@@ -79,14 +79,14 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
     // Construir la ruta de la carpeta del usuario
     char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
     snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
-    printf("Directorio del usuario: %s\n", user_directory);
+    printf("s> Directorio del usuario: %s\n", user_directory);
     // Verificar si la carpeta del usuario existe
     struct stat st = {0};
     if (stat(user_directory, &st) == 0) {
         // La carpeta del usuario existe
         FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
         if (connections_file == NULL) {
-            perror("Error al abrir el archivo de conexiones");
+            perror("s> Error al abrir el archivo de conexiones");
             result = 2;
         } else {
             char line[MAX_USERNAME_LENGTH + 20];
@@ -104,7 +104,7 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
                 // Agregar el usuario al archivo de conexiones
                 connections_file = fopen(CONNECTIONS_FILE, "a");
                 if (connections_file == NULL) {
-                    perror("Error al abrir el archivo de conexiones");
+                    perror("s> Error al abrir el archivo de conexiones");
                     result = 2;
                 } else {
                     fprintf(connections_file, "%s %s %d\n", username, ip, port);
@@ -116,7 +116,7 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
             }
         }
     } else {
-        printf("Usuario no encontrado: %s\n", username);
+        printf("> Usuario no encontrado: %s\n", username);
         result = 1;  // Usuario no encontrado
     }
     return result;
@@ -135,7 +135,7 @@ int disconnect_user(char username[MAX_USERNAME_LENGTH]) {
         // Verificar si el usuario está conectado
         FILE *connections_file = fopen(CONNECTIONS_FILE, "r");
         if (connections_file == NULL) {
-            perror("Error al abrir el archivo de conexiones");
+            perror("s> Error al abrir el archivo de conexiones");
             result = 3;
         } else {
             char line[MAX_USERNAME_LENGTH + 20];

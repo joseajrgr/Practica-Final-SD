@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "../include/almacenamiento.h"
 
+#define MAX_DATETIME_LENGTH 20
 #define MAX_USERNAME_LENGTH 256
 #define MAX_FILE_LENGTH 256
 #define CONNECTIONS_FILE "conexiones.txt"
@@ -19,11 +20,12 @@ struct client_thread_args {
 void *handle_client(void *args) {
     struct client_thread_args *client_args = (struct client_thread_args *)args;
     int client_socket = client_args->socket;
-    int32_t operacion = -1;
-    char username[MAX_USERNAME_LENGTH];
-    int result = 0;
     char buffer[4];
-    char datetime[20];
+    char datetime[MAX_DATETIME_LENGTH];
+    char username[MAX_USERNAME_LENGTH];
+    int32_t operacion = -1;
+    int32_t result = 0;
+    
     
     // Recibir código de operación
     if (recv(client_socket, buffer, sizeof(int32_t), 0) == -1) {
@@ -36,14 +38,14 @@ void *handle_client(void *args) {
         printf("s> Operación: %d\n", operacion);
         
         // Recibir la fecha y la hora
-        if (recv(client_socket, datetime, 20, 0) == -1) {
+        if (recv(client_socket, datetime, MAX_DATETIME_LENGTH, 0) == -1) {
             perror("s> Error al recibir la fecha y la hora");
             result = 2;
         }
         printf("s> Momento en el que se hizo el envío: %s\n", datetime);
 
         // Recibir nombre de usuario del cliente
-        if (recv(client_socket, username, sizeof(char[MAX_USERNAME_LENGTH]), 0) == -1) {
+        if (recv(client_socket, username, MAX_USERNAME_LENGTH, 0) == -1) {
             perror("s> Error al recibir el nombre del cliente");
             result = 2;
         }
@@ -82,6 +84,7 @@ void *handle_client(void *args) {
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
             result = disconnect_user(username);
+        
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
             printf("s> Operación PUBLISH\n");
@@ -115,12 +118,13 @@ void *handle_client(void *args) {
             } else {
                 result = delete_file(username, file_name);
             }
-        // Verificar si la operación es LISTUSERS
+        
+        // Verificar si la operación es LIST_USERS
         } else if (operacion == 6) {
-            // Recibir nombre de usuario del cliente
-            
+            // Recibir nombre de usuario del cliente  
             result = list_connected_users(username, client_socket);
             
+        // Verificar si la operación es LIST_CONTENT
         } else if (operacion == 7) {
             char remote_user[MAX_USERNAME_LENGTH];
 
@@ -134,7 +138,8 @@ void *handle_client(void *args) {
                 // Lógica para LIST_CONTENT
                 result = list_user_content(username, remote_user, client_socket);
             }
-        // Verificar si la operación es GETFILE
+        
+        // Verificar si la operación es GET_FILE
         } else if (operacion == 8) {
             char remote_user[MAX_USERNAME_LENGTH];
             char file_name[MAX_FILE_LENGTH];
@@ -162,7 +167,6 @@ void *handle_client(void *args) {
                     send(client_socket, &delimiter, sizeof(delimiter), 0);
                     send(client_socket, remote_port_str, strlen(remote_port_str) + 1, 0);
 
-
                 } else {
                     char error_code = result;
                     send(client_socket, &error_code, sizeof(error_code), 0);
@@ -176,7 +180,7 @@ void *handle_client(void *args) {
     }
     printf("s>\n");
     // Enviar resultado al cliente
-    if (send(client_socket, &result, sizeof(result), 0) == -1) {
+    if (send(client_socket, &result, sizeof(int32_t), 0) == -1) {
         perror("Error al enviar el resultado al cliente");
     }
 
