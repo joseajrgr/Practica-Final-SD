@@ -316,7 +316,7 @@ Respuesta list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user
 
     // Verificar si el usuario existe
     char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
-    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
+    snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, remote_user);
     struct stat st = {0};
     if (stat(user_directory, &st) == -1) {
         respuesta.result = 1;  // Usuario no existe
@@ -355,11 +355,9 @@ Respuesta list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user
                     // Leer el contenido del archivo y filtrar por remote_user
                     while (fgets(line, sizeof(line), file)) {
                         line[strcspn(line, "\n")] = '\0';  // Eliminar el salto de línea
-                        char *token = strtok(line, " ");
-                        if (token!= NULL && strcmp(token, remote_user) == 0) {
-                            strcat(file_contents, line);
-                            strcat(file_contents, "\n");
-                        }
+                        strcat(file_contents, line);
+                        strcat(file_contents, "\n");
+                        
                     }
                     fclose(file);
 
