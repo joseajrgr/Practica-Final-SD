@@ -90,17 +90,12 @@ void *handle_client(void *args) {
             printf("s> Puerto: %d\n", port);
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
-            // Enviar resultado al cliente
-            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
-                perror("Error al enviar el resultado al cliente");
-            }
+            
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
             result = disconnect_user(username);
             // Enviar resultado al cliente
-            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
-                perror("Error al enviar el resultado al cliente");
-            }
+            
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
             printf("s> Operación PUBLISH\n");
@@ -123,10 +118,7 @@ void *handle_client(void *args) {
             printf("s> Descripción: %s\n", description);
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
-            // Enviar resultado al cliente
-            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
-                perror("Error al enviar el resultado al cliente");
-            }
+            
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {
             char file_name[MAX_FILE_LENGTH];
@@ -137,19 +129,13 @@ void *handle_client(void *args) {
             } else {
                 result = delete_file(username, file_name);
             }
-            // Enviar resultado al cliente
-            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
-                perror("Error al enviar el resultado al cliente");
-            }
+            
         // Verificar si la operación es LIST_USERS
         } else if (operacion == 6) {
             // Recibir nombre de usuario del cliente  
             respuesta = list_connected_users(username);
             result = respuesta.result;
-            // Enviar resultado al cliente
-            if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
-                perror("Error al enviar el resultado al cliente");
-            }
+            
         // Verificar si la operación es LIST_CONTENT
         } else if (operacion == 7) {
             char remote_user[MAX_USERNAME_LENGTH];

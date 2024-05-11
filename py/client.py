@@ -271,11 +271,12 @@ class client :
             response = s.recv(1)
             if response == b'\x00':
                 print("c> LIST_USERS OK")
-                num_users = s.recv(1024).decode('utf-8')
+                num_users = s.recv(1024).decode('utf-8').rstrip('\0')  # Eliminar caracteres nulos al final
+                num_users = num_users.replace('\0', '')  # Eliminar todos los caracteres nulos
                 print(num_users)
                 # Procesar la información recibida y almacenarla en _users_info
                 for line in num_users.split('\n'):
-                    line = line.strip() # Eliminar espacios en blanco al inicio y al final
+                    line = line.strip()  # Eliminar espacios en blanco al inicio y al final
                     if line:  # Ignorar líneas vacías
                         parts = line.split()
                         if len(parts) == 3:  # Verificar que la línea tenga exactamente tres partes
