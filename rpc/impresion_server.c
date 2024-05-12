@@ -10,15 +10,15 @@ void *
 imprimir_1_svc(entrada arg1,  struct svc_req *rqstp)
 {
 	static char * result;
-	int operacion = arg1.operacion;
+	printf("asdfi");
 
 	// Comprobar la operación
-	if (operacion == 0) {
-		result = "REGISTER";
-	} else if (operacion == 1) {
-		result = "UNREGISTER";
+	if (arg1.operacion == 0) {
+		printf("%s REGISTER %s", arg1.user, arg1.datetime);
+	} else if (arg1.operacion == 1) {
+		printf("%s UNREGISTER %s", arg1.user, arg1.datetime);
 	} else {
-		result = "Operación no válida";
+		printf("Los datos no están en el formato esperado");
 	}
 
 	return (void *) &result;

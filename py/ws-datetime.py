@@ -22,9 +22,9 @@ application = WsgiApplication(application)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logging.getLogger('spyne.protocol.xml').setLevel(logging.DEBUG)
-    logging.info("listening to http://127.0.0.1:7900; wsdl is at: http://localhost:7900/?wsdl ")
-    server = make_server('localhost', 7900, application)
-    print("El servidor está corriendo en http://localhost:7900")
+    logging.info("listening to http://127.0.0.1:7901; wsdl is at: http://localhost:7901/?wsdl ")
+    server = make_server('localhost', 7901, application)
+    print("El servidor está corriendo en http://localhost:7901")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

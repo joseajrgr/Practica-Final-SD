@@ -6,7 +6,7 @@ import aux
 import os
 import zeep
 
-WSDL = "http://localhost:7900/?wsdl"
+WSDL = "http://localhost:7901/?wsdl"
 
 class client :
 

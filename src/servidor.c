@@ -34,7 +34,7 @@ void *handle_client(void *args) {
 
     // Variables para rpc
     CLIENT *clnt;
-	void  *resultado_rpc;
+	void *resultado_rpc;
 	entrada mensaje_rpc;
     char *host = "127.0.0.1";
 
@@ -74,6 +74,7 @@ void *handle_client(void *args) {
         strcpy(mensaje_rpc.datetime, datetime);
 
         resultado_rpc = imprimir_1(mensaje_rpc, clnt);
+        printf("%p", &resultado_rpc);
         if (resultado_rpc == (void *) NULL) {
             clnt_perror (clnt, "call failed");
         }
