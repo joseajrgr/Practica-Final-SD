@@ -1,5 +1,4 @@
 import socket
-import sys
 import threading
 import os
 
@@ -9,7 +8,7 @@ def readNumber(sock):
     while True:
         msg = sock.recv(1)
         if (msg == b'\0'):
-            break;
+            break
         a += msg.decode()
 
     return(int(a,10))
@@ -55,8 +54,6 @@ def handle_download_requests(server_socket):
         
         client_socket.close()
         
-
-
 def stop_listen_thread(thread):
     if thread is not None:
         # Detener la ejecución del hilo

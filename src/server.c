@@ -21,6 +21,61 @@ struct client_thread_args {
     int socket;
 };
 
+void envio_rpc(int32_t operacion, char username[MAX_USERNAME_LENGTH], char datetime[MAX_DATETIME_LENGTH]) {
+    CLIENT *clnt;
+	void *resultado_rpc;
+	entrada mensaje_rpc;
+    char *host = "127.0.0.1";
+
+    clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
+    if (clnt == NULL) {
+        clnt_pcreateerror (host);
+        exit (1);
+    }
+
+    mensaje_rpc.operacion = operacion;
+    mensaje_rpc.user = malloc(strlen(username));
+    strcpy(mensaje_rpc.user, username);
+    mensaje_rpc.file = "";
+    mensaje_rpc.datetime = malloc(strlen(datetime));
+    strcpy(mensaje_rpc.datetime, datetime);
+
+    resultado_rpc = imprimir_1(mensaje_rpc, clnt);
+    if (resultado_rpc == (void *) NULL) {
+        clnt_perror (clnt, "call failed");
+    }
+    clnt_destroy (clnt);
+}
+
+void envio_rpc_con_fichero(int32_t operacion, char username[MAX_USERNAME_LENGTH], 
+                            char datetime[MAX_DATETIME_LENGTH], char file[MAX_FILE_LENGTH]) {
+    CLIENT *clnt;
+	void *resultado_rpc;
+	entrada mensaje_rpc;
+    char *host = "127.0.0.1";
+
+    // Envío rpc
+    clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
+    if (clnt == NULL) {
+        clnt_pcreateerror (host);
+        exit (1);
+    }
+
+    mensaje_rpc.operacion = operacion;
+    mensaje_rpc.user = malloc(strlen(username));
+    strcpy(mensaje_rpc.user, username);
+    mensaje_rpc.file = malloc(strlen(file));
+    strcpy(mensaje_rpc.file, file);
+    mensaje_rpc.datetime = malloc(strlen(datetime));
+    strcpy(mensaje_rpc.datetime, datetime);
+
+    resultado_rpc = imprimir_1(mensaje_rpc, clnt);
+    if (resultado_rpc == (void *) NULL) {
+        clnt_perror (clnt, "call failed");
+    }
+    clnt_destroy (clnt);
+}
+
 void *handle_client(void *args) {
     // Recibir argumentos
     struct client_thread_args *client_args = (struct client_thread_args *)args;
@@ -31,12 +86,6 @@ void *handle_client(void *args) {
     int32_t operacion = -1;
     int32_t result = 0;
     Respuesta respuesta;
-
-    // Variables para rpc
-    CLIENT *clnt;
-	void *resultado_rpc;
-	entrada mensaje_rpc;
-    char *host = "127.0.0.1";
 
 	// Recibir código de operación
     if (recvMessage(client_socket, (char *)buffer, sizeof(int32_t)) == -1) {
@@ -51,7 +100,6 @@ void *handle_client(void *args) {
             perror("s> Error al recibir la fecha y la hora");
             result = 2;
         }
-        printf("s> Momento en el que se hizo el envío: %s\n", datetime);
 
         // Recibir nombre de usuario del cliente
         if (readLine(client_socket, (char *)username, MAX_USERNAME_LENGTH) == -1) {
@@ -59,52 +107,35 @@ void *handle_client(void *args) {
             result = 2;
         }
         
-        // Envío rpc
-        clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
-        if (clnt == NULL) {
-            clnt_pcreateerror (host);
-            exit (1);
-        }
-
-        mensaje_rpc.operacion = operacion;
-		mensaje_rpc.user = malloc(strlen(username));
-		strcpy(mensaje_rpc.user, username);
-        mensaje_rpc.file = "";
-        mensaje_rpc.datetime = malloc(strlen(datetime));
-        strcpy(mensaje_rpc.datetime, datetime);
-
-        resultado_rpc = imprimir_1(mensaje_rpc, clnt);
-        printf("%p", &resultado_rpc);
-        if (resultado_rpc == (void *) NULL) {
-            clnt_perror (clnt, "call failed");
-        }
-        clnt_destroy (clnt);
-        
         pthread_mutex_lock(&mutex_almacenamiento);
         
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
-            printf("s> REGISTER FROM %s\n", username);
+            envio_rpc(operacion, username, datetime);
             result = register_user(username);
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
                 perror("Error al enviar el resultado al cliente");
             }
+            printf("s> REGISTER FINISHED\n");
 
         // Verificar si la operación es UNREGISTER
         } else if (operacion == 1) {
-            printf("s> UNREGISTER FROM %s\n", username);
+            envio_rpc(operacion, username, datetime);
             result = unregister_user(username);
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
                 perror("Error al enviar el resultado al cliente");
             }
+            printf("s> UNREGISTER FINISHED\n");
+        
         // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
-            printf("s> CONNECT FROM %s\n", username);
             char ip[MAX_IP_LENGTH];
             int32_t port;
             
+            envio_rpc(operacion, username, datetime);
+
             // Recibir IP del cliente
             if (readLine(client_socket, ip, MAX_IP_LENGTH) == -1) {
                 perror("s> Error al recibir la IP del cliente");
@@ -121,16 +152,16 @@ void *handle_client(void *args) {
            
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
+            printf("s> CONNECT FINISHED\n");
             
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
-            printf("s> DISCONNECT FROM %s\n", username);
+            envio_rpc(operacion, username, datetime);
             result = disconnect_user(username);
-        
+            printf("s> DISCONNECT FINISHED\n");
             
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
-            printf("s> PUBLISH FROM %s\n", username);
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
@@ -139,6 +170,8 @@ void *handle_client(void *args) {
                 result = 4;
             }
             
+            envio_rpc_con_fichero(operacion, username, datetime, file_name);
+
             // Recibir descripción del fichero del cliente
             if (readLine(client_socket, description, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir la descripción del fichero");
@@ -147,30 +180,33 @@ void *handle_client(void *args) {
             
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
+            printf("s> PUBLISH FINISHED\n");
             
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {
-            printf("s> DELETE FROM %s\n", username);
             char file_name[MAX_FILE_LENGTH];
 
-            if (readLine(client_socket, file_name, sizeof(file_name)) == -1) {
+            if (readLine(client_socket, file_name, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir el nombre del fichero");
                 result = 4;
             } else {
+                envio_rpc_con_fichero(operacion, username, datetime, file_name);
                 result = delete_file(username, file_name);
             }
+            printf("s> DELETE FINISHED\n");
             
         // Verificar si la operación es LIST_USERS
         } else if (operacion == 6) {
-            printf("s> LIST_USERS FROM %s\n", username);
-            // Recibir nombre de usuario del cliente  
+            envio_rpc(operacion, username, datetime);
             respuesta = list_connected_users(username);
             result = respuesta.result;
+            printf("s> LIST_USERS FINISHED\n");
             
         // Verificar si la operación es LIST_CONTENT
         } else if (operacion == 7) {
-            printf("s> LIST_CONTENT FROM %s\n", username);
             char remote_user[MAX_USERNAME_LENGTH];
+
+            envio_rpc(operacion, username, datetime);
 
             // Recibir nombre de usuario remoto del cliente
             if (readLine(client_socket, remote_user, sizeof(remote_user)) == -1) {
@@ -180,14 +216,16 @@ void *handle_client(void *args) {
             } else {
                 // Lógica para LIST_CONTENT
                 respuesta = list_user_content(username, remote_user);
-                result = respuesta.result;
-                
+                result = respuesta.result;  
             }
+            printf("s> LIST_CONTENT FINISHED\n");
+
         } else {
             printf("Operación desconocida: %d\n", operacion);
             result = 3;
         }      
     }
+
     pthread_mutex_unlock(&mutex_almacenamiento);
 
     // Enviar resultado al cliente

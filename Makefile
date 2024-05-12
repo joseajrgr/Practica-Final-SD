@@ -1,5 +1,5 @@
 # Nombre del ejecutable
-TARGET = bin/servidor
+TARGET = bin/server
 
 # Compilador
 CC = gcc
@@ -9,7 +9,7 @@ CFLAGS = -Wall -Wextra -pthread -g -I/usr/include/tirpc
 LDFLAGS = -lnsl -ltirpc
 
 # Archivos fuente
-SRCS = src/servidor.c src/almacenamiento.c src/sockets.c
+SRCS = src/server.c src/almacenamiento.c src/sockets.c
 
 # Objetos generados
 OBJS = $(SRCS:src/%.c=obj/%.o)
@@ -25,8 +25,8 @@ $(TARGET): $(OBJS)
 obj/%.o: src/%.c include/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Regla para compilar el servidor
-obj/servidor.o: src/servidor.c
+# Regla para compilar el server
+obj/server.o: src/server.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Para crear las carpetas necesarias

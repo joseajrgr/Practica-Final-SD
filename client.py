@@ -1,8 +1,7 @@
 from enum import Enum
 import argparse
 import socket
-import aux
-
+import py.aux
 import os
 import zeep
 
@@ -106,10 +105,10 @@ class client :
         try:
             # Obtener un puerto libre si no se proporciona uno
             if listen_port is None:
-                listen_port = aux.find_free_port()
+                listen_port = py.aux.find_free_port()
                     
             # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
-            listen_thread = aux.start_listen_thread(listen_port)
+            listen_thread = py.aux.start_listen_thread(listen_port)
             
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((client._server, client._port))
@@ -139,7 +138,7 @@ class client :
                     return client.RC.OK
                 elif response == b'\x01':
                     print("c> CONNECT FAIL, USER DOES NOT EXIST")
-                    aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
+                    py.aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
                     return client.RC.USER_ERROR
                 elif response == b'\x02':
                     print("c> USER ALREADY CONNECTED")
@@ -148,7 +147,7 @@ class client :
                     return client.RC.ERROR
                 else:
                     print("c> CONNECT FAIL")
-                    aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
+                    py.aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
                     return client.RC.ERROR
         except Exception as e:
             print("c> CONNECT FAIL")
@@ -178,7 +177,7 @@ class client :
                     print("c> DISCONNECT OK")
                     client._user = None
                     # Detener la ejecución del hilo y cerrar el puerto de escucha
-                    aux.stop_listen_thread(client._listen_thread)
+                    py.aux.stop_listen_thread(client._listen_thread)
                     client._listen_thread = None
                     return client.RC.OK
                 elif response == b'\x01':
