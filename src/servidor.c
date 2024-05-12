@@ -152,13 +152,10 @@ void *handle_client(void *args) {
                 result = 4;
             
             } else {
-                printf("s> Nombre de usuario remoto: %s\n", remote_user);
                 // Lógica para LIST_CONTENT
-                
                 respuesta = list_user_content(username, remote_user);
                 result = respuesta.result;
-                printf("texto: %s\n", respuesta.texto);
-                printf("s> Resultado de la operación LIST_CONTENT: %d\n", result);
+                
             }
         } else {
             printf("Operación desconocida: %d\n", operacion);

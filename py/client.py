@@ -221,6 +221,10 @@ class client :
     def delete(file_name):
         DELETE = 5
 
+        if client._user is None:
+            print("c> DELETE FAIL, USER NOT CONNECTED")
+            return client.RC.ERROR
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(DELETE.to_bytes(4, byteorder='big'))

@@ -235,16 +235,44 @@ int publish_file(char username[MAX_USERNAME_LENGTH], char file_name[MAX_FILE_LEN
                 char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
                 snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
 
-                // Abrir el archivo de publicaciones del usuario en modo de adición
-                FILE *file = fopen(publications_file_path, "a");
+                // Abrir el archivo de publicaciones del usuario en modo de lectura
+                FILE *file = fopen(publications_file_path, "r");
                 if (file == NULL) {
                     perror("Error al abrir el archivo de publicaciones del usuario");
                     result = 4;
                 } else {
-                    // Escribir la publicación en el archivo del usuario
-                    fprintf(file, "%s %s %s\n", username, file_name, description);
+                    char line[MAX_USERNAME_LENGTH + MAX_FILE_LENGTH + MAX_FILE_LENGTH + 4];
+                    int file_already_published = 0;
+
+                    // Leer línea por línea el archivo de publicaciones
+                    while (fgets(line, sizeof(line), file)) {
+                        // Eliminar el salto de línea al final de la línea
+                        line[strcspn(line, "\n")] = '\0';
+
+                        // Verificar si la línea contiene el nombre del archivo a publicar
+                        if (strstr(line, file_name) != NULL) {
+                            file_already_published = 1;
+                            break;
+                        }
+                    }
+
                     fclose(file);
-                    result = 0;  // Éxito
+
+                    if (file_already_published) {
+                        result = 3;  // Archivo ya publicado
+                    } else {
+                        // Abrir el archivo de publicaciones del usuario en modo de adición
+                        file = fopen(publications_file_path, "a");
+                        if (file == NULL) {
+                            perror("Error al abrir el archivo de publicaciones del usuario");
+                            result = 4;
+                        } else {
+                            // Escribir la publicación en el archivo del usuario
+                            fprintf(file, "%s %s %s\n", username, file_name, description);
+                            fclose(file);
+                            result = 0;  // Éxito
+                        }
+                    }
                 }
             } else {
                 result = 2;  // Usuario no conectado
@@ -299,8 +327,6 @@ Respuesta list_connected_users(char username[MAX_USERNAME_LENGTH]) {
 
                     
                     respuesta.texto = file_contents;
-                    printf("s> Contenido del archivo de conexiones: %s\n", file_contents);
-                    printf("s> Respuesta: %s\n", respuesta.texto);
                     respuesta.result = 0;  // Éxito
                 }
             } else {
@@ -346,7 +372,7 @@ Respuesta list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user
                 // Construir la ruta al archivo "publicaciones.txt" del usuario
                 char publications_file_path[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 20]; // Ajusta el tamaño según sea necesario
                 snprintf(publications_file_path, sizeof(publications_file_path), "%s/publicaciones.txt", user_directory);
-                printf("s> Ruta del archivo de publicaciones: %s\n", publications_file_path);
+                
                 // Abrir el archivo de publicaciones del usuario en modo de lectura
                 FILE *file = fopen(publications_file_path, "r");
                 if (file == NULL) {
@@ -367,8 +393,6 @@ Respuesta list_user_content(char username[MAX_USERNAME_LENGTH], char remote_user
 
                     
                     respuesta.texto = file_contents;
-                    printf("s> Contenido del archivo de publicaciones: %s\n", file_contents);
-                    printf("s> Respuesta: %s\n", respuesta.texto);
                     respuesta.result = 0;  // Éxito
                 }
             } else {
