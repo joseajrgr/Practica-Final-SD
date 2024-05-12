@@ -23,6 +23,7 @@ class client :
     _user = None
     _listen_thread = None
     _users_info = {}
+
     # ******************** METHODS *******************
 
 
@@ -35,15 +36,18 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(REGISTER.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Manda el nombre de usuario al servidor
                 user_data = user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> REGISTER OK")
@@ -54,6 +58,7 @@ class client :
                 else:
                     print("c> REGISTER FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> REGISTER FAIL")
             return client.RC.ERROR
@@ -63,21 +68,23 @@ class client :
     def unregister(user):
         UNREGISTER = 1
 
-
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((client._server, client._port))
                 s.sendall(UNREGISTER.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Mandar el nombre de usuario
                 user_data = user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> UNREGISTER OK")
@@ -88,12 +95,11 @@ class client :
                 else:
                     print("c> UNREGISTER FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> UNREGISTER FAIL")
             return client.RC.ERROR
 
-
-    
     @staticmethod
     def connect(user, listen_port=None):
         CONNECT = 2
@@ -114,6 +120,7 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(CONNECT.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
@@ -130,6 +137,7 @@ class client :
                 port_data = listen_port.to_bytes(4, byteorder='big')
                 s.sendall(port_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> CONNECT OK")
@@ -149,11 +157,11 @@ class client :
                     print("c> CONNECT FAIL")
                     py.aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> CONNECT FAIL")
             return client.RC.ERROR
         
-    
     @staticmethod
     def disconnect(user):
         DISCONNECT = 3
@@ -163,6 +171,7 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(DISCONNECT.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
@@ -172,6 +181,7 @@ class client :
                 user_data = user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> DISCONNECT OK")
@@ -189,16 +199,16 @@ class client :
                 else:
                     print("c> DISCONNECT FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> DISCONNECT FAIL")
             return client.RC.ERROR
-
-        
 
     @staticmethod
     def publish(file_name, description):
         PUBLISH = 4
         
+        # Se comprueba si hay un nombre de usuario asociado (es decir, está conectado)
         if client._user is None:
             print("c> PUBLISH FAIL, USER NOT CONNECTED")
             return client.RC.ERROR
@@ -213,22 +223,26 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Mandar el nombre de usuario
                 user_data = client._user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
                 
-                
+                # Mandar el nombre del fichero
                 file_name_data = file_name.encode('utf-8') + b'\0'
                 s.sendall(file_name_data)
                 
+                # Mandar la descripción del fichero
                 description_data = description.encode('utf-8') + b'\0'
                 s.sendall(description_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> PUBLISH OK")
@@ -245,6 +259,7 @@ class client :
                 else:
                     print("c> PUBLISH FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> PUBLISH FAIL")
             return client.RC.ERROR
@@ -263,18 +278,22 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(DELETE.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Mandar el nombre de usuario
                 user_data = client._user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
             
+                # Mandar el nombre del fichero
                 file_name_data = file_name.encode('utf-8') + b'\0'
                 s.sendall(file_name_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> DELETE OK")
@@ -291,11 +310,11 @@ class client :
                 else:
                     print("c> DELETE FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> DELETE FAIL")
             return client.RC.ERROR
         
-
     @staticmethod
     def listusers():
         LISTUSERS = 6
@@ -309,35 +328,42 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Mandar el nombre de usuario
                 print(f"Enviando nombre de usuario: {client._user}")
                 user_data = client._user.encode('utf-8') + b'\0'
                 s.sendall(user_data)
                 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 if response == b'\x00':
                     print("c> LIST_USERS OK")
                     num_users = s.recv(1024).decode('utf-8').rstrip('\0')  # Eliminar caracteres nulos al final
                     num_users = num_users.replace('\0', '')  # Eliminar todos los caracteres nulos
                     print(num_users)
+
                     # Procesar la información recibida y almacenarla en _users_info
                     for line in num_users.split('\n'):
-                        line = line.strip()  # Eliminar espacios en blanco al inicio y al final
-                        if line:  # Ignorar líneas vacías
+                        # Eliminar espacios en blanco al inicio y al final
+                        line = line.strip()
+                        # Ignorar líneas vacías
+                        if line:
                             parts = line.split()
-                            if len(parts) == 3:  # Verificar que la línea tenga exactamente tres partes
+                            # Verificar que la línea tenga exactamente tres partes
+                            if len(parts) == 3:
                                 username, ip, port = parts
                                 client._users_info[username] = (ip, int(port))
                             else:
                                 print(f"Error: Unexpected format in line '{line}'")
-                    
                     print(client._users_info)
                     return client.RC.OK
+                
                 elif response == b'\x01':
                     print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
                     return client.RC.USER_ERROR
@@ -347,11 +373,10 @@ class client :
                 else:
                     print("c> LIST_USERS FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> LIST_USERS FAIL")
             return client.RC.ERROR
-
-       
 
     @staticmethod
     def listcontent(remote_user):
@@ -366,21 +391,24 @@ class client :
                 s.connect((client._server, client._port))
                 s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
 
+                # Obtener la fecha y la hora para mandárselas al servidor
                 client_ws = zeep.Client(wsdl=WSDL)
                 datetime = client_ws.service.get_datetime()
                 print("c> Momento del envío al servidor:", datetime)
                 datetime = datetime.encode('utf-8') + b'\0'
                 s.sendall(datetime)
 
+                # Manda el nombre del usuario
                 user_data = client._user.encode('utf-8') + b'\0'
-                
                 print("Enviando nombre de usuario: ", client._user)
                 s.sendall(user_data)
+
+                # Manda el nombre del otro usuario
                 remote_user_data = remote_user.encode('utf-8') + b'\0'
-                
                 print("Enviando nombre de usuario remoto: ", remote_user)
                 s.sendall(remote_user_data)
 
+                # Recibe la respuesta e imprime el resultado
                 response = s.recv(1)
                 print("Respuesta del servidor:", response)
                 if response == b'\x00':
@@ -400,15 +428,13 @@ class client :
                 else:
                     print("c> LIST_CONTENT FAIL")
                     return client.RC.ERROR
+                
         except Exception as e:
             print("c> LIST_CONTENT FAIL")
             return client.RC.ERROR
 
-        
-
     @staticmethod
     def getfile(user, remote_FileName, local_FileName):
-        GET_FILE = 8
         result = 0
 
         if client._user is None:
@@ -421,36 +447,39 @@ class client :
             ip, port = client._users_info[user]
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-                        client_socket.connect((ip, port))
-                        client_ws = zeep.Client(wsdl=WSDL)
-                        datetime = client_ws.service.get_datetime()
-                        print("c> Momento del envío al servidor:", datetime)
-                        datetime = datetime.encode('utf-8') + b'\0'
-                        client_socket.sendall(datetime)
+                    client_socket.connect((ip, port))
 
-                        
-                        client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
+                    # Obtener la fecha y la hora
+                    client_ws = zeep.Client(wsdl=WSDL)
+                    datetime = client_ws.service.get_datetime()
+                    print("c> Momento del envío:", datetime)
+                    datetime = datetime.encode('utf-8') + b'\0'
+                    client_socket.sendall(datetime)
 
-                        response = client_socket.recv(1)
-                        if response == b'\x00':
-                            with open(local_FileName, 'wb') as f:
-                                while True:
-                                    data = client_socket.recv(1024)
-                                    if not data:
-                                        break
-                                    f.write(data)
-                            result = 0
-                            print("c> GET_FILE OK")
-                        elif response == b'\x01':
-                            print("c> GET_FILE FAIL / FILE NOT EXIST")
-                            return client.RC.USER_ERROR
-                        else:
-                            print("c> GET_FILE FAIL")
-                            return client.RC.ERROR
+                    # Manda el nombre del fichero
+                    client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
+
+                    # Recibe la respuesta e imprime el resultado
+                    response = client_socket.recv(1)
+                    if response == b'\x00':
+                        with open(local_FileName, 'wb') as f:
+                            while True:
+                                data = client_socket.recv(1024)
+                                if not data:
+                                    break
+                                f.write(data)
+                        result = 0
+                        print("c> GET_FILE OK")
+                    elif response == b'\x01':
+                        print("c> GET_FILE FAIL / FILE NOT EXIST")
+                        return client.RC.USER_ERROR
+                    else:
+                        print("c> GET_FILE FAIL")
+                        return client.RC.ERROR
+                    
             except Exception as e:
                 print("c> GET_FILE FAIL")
                 return client.RC.ERROR
-
 
         else:
             print("c> GET_FILE FAIL, REMOTE USER DOES NOT EXIST")
