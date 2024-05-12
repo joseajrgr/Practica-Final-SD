@@ -58,11 +58,10 @@ def handle_download_requests(server_socket):
 
 
 def stop_listen_thread(thread):
-    # Detener la ejecución del hilo
-    thread.join()
+    if thread is not None:
+        # Detener la ejecución del hilo
+        thread.join()
 
-    # Cerrar el socket de escucha
-    server_socket = thread._args[0]
-    server_socket.close()
-
-    print("stop_listen_thread()")
+        # Cerrar el socket de escucha
+        server_socket = thread._args[0]
+        server_socket.close()

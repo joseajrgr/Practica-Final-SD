@@ -100,7 +100,7 @@ void *handle_client(void *args) {
         } else if (operacion == 3) {
             printf("s> DISCONNECT FROM %s\n", username);
             result = disconnect_user(username);
-            // Enviar resultado al cliente
+        
             
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
