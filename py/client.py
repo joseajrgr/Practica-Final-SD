@@ -259,6 +259,10 @@ class client :
     def listusers():
         LISTUSERS = 6
 
+        if client._user is None:
+            print("c> LIST_USERS FAIL, USER NOT CONNECTED")
+            return client.RC.ERROR
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
@@ -303,6 +307,10 @@ class client :
     def listcontent(remote_user):
         LIST_CONTENT = 7
 
+        if client._user is None:
+            print("c> LIST_CONTENT FAIL, USER NOT CONNECTED")
+            return client.RC.ERROR
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((client._server, client._port))
             s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
@@ -343,6 +351,7 @@ class client :
     def getfile(user, remote_FileName, local_FileName):
         GET_FILE = 8
         result = 0
+        
         if client._user is None:
             print("c> GET_FILE FAIL, USER NOT CONNECTED")
             return 2

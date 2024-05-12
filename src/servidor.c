@@ -173,7 +173,6 @@ void *handle_client(void *args) {
     if (result == 0) {
         if (operacion == 6 || operacion == 7) {
             strcat(respuesta.texto, "\n");
-            printf("s> Enviando respuesta al cliente\n");
             sendMessage(client_socket, respuesta.texto, strlen(respuesta.texto)+1);
         }
     }
