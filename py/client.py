@@ -174,6 +174,10 @@ class client :
     def publish(file_name, description):
         PUBLISH = 4
         
+        if client._user is None:
+            print("c> PUBLISH FAIL, USER NOT CONNECTED")
+            return client.RC.ERROR
+
         # Verificar si el fichero existe en la ruta del cliente
         if not os.path.exists("./" + file_name):
             print("c> PUBLISH FAIL, FILE DOES NOT EXIST")
@@ -189,18 +193,14 @@ class client :
             datetime = datetime.encode('utf-8') + b'\0'
             s.sendall(datetime)
 
-            print("Enviando nombre de usuario: ", client._user)
             user_data = client._user.encode('utf-8') + b'\0'
             s.sendall(user_data)
             
-            print("Enviando nombre del fichero: ", file_name)
+            
             file_name_data = file_name.encode('utf-8') + b'\0'
-            print("Datos del nombre del fichero:", file_name_data)  # Imprimir los datos enviados
             s.sendall(file_name_data)
             
-            print("Enviando descripción del fichero: ", description)
             description_data = description.encode('utf-8') + b'\0'
-            print("Datos de la descripción del fichero:", description_data)
             s.sendall(description_data)
 
             response = s.recv(1)

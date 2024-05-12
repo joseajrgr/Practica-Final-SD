@@ -112,16 +112,13 @@ void *handle_client(void *args) {
                 perror("s> Error al recibir el nombre del cliente");
                 result = 4;
             }
-            printf("s> Nombre del fichero recibido: %s\n", file_name);
-
+            
             // Recibir descripción del fichero del cliente
             if (readLine(client_socket, description, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir la descripción del fichero");
                 result = 4;
             }
-            printf("s> Descripción del fichero recibida: %s\n", description);
             
-            printf("s> Descripción: %s\n", description);
             // Lógica para PUBLISH
             result = publish_file(username, file_name, description);
             
