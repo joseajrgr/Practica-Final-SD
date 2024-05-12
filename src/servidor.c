@@ -13,6 +13,7 @@
 #define MAX_FILE_LENGTH 256
 #define CONNECTIONS_FILE "conexiones.txt"
 
+pthread_mutex_t mutex_almacenamiento;
 
 // Estructura para pasar argumentos al hilo del cliente
 struct client_thread_args {
@@ -54,6 +55,7 @@ void *handle_client(void *args) {
         }
         printf("s> %d FROM %s\n", operacion, username);
         
+        pthread_mutex_lock(&mutex_almacenamiento);
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
             result = register_user(username);
@@ -194,6 +196,8 @@ void *handle_client(void *args) {
             result = 3;
         }      
     }
+    pthread_mutex_unlock(&mutex_almacenamiento);
+    
     printf("s>\n");
     // Enviar resultado al cliente
     if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
