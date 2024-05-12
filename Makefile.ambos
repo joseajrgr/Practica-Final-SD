@@ -1,0 +1,50 @@
+# Nombre del ejecutable
+TARGET = bin/servidor
+
+# Compilador
+CC = gcc
+
+# Opciones del compilador
+CFLAGS = -Wall -Wextra -pthread -g -I/usr/include/tirpc
+LDLIBS = -lnsl -ltirpc
+
+# Archivos fuente
+SRCS = servidor.c almacenamiento.c sockets.c
+RPC_SRCS = impresion.x
+
+# Directorios
+OBJDIR = obj
+BINDIR = bin
+SRCDIR = src
+INCDIR = include
+
+# Objetos generados
+OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+RPC_OBJS = $(patsubst $(SRCDIR)/%.x,$(OBJDIR)/%_xdr.c,$(RPC_SRCS))
+
+# Parámetros RPC
+RPCGEN = rpcgen
+RPC_CFLAGS = 
+
+# Regla por defecto para generar el ejecutable
+all: directories $(TARGET)
+
+# Regla para compilar el ejecutable
+$(TARGET): $(OBJS) $(RPC_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+# Regla para compilar los archivos fuente en objetos
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Regla para compilar los archivos RPC
+$(OBJDIR)/%_xdr.c: $(SRCDIR)/%.x
+	$(RPCGEN) $(RPC_CFLAGS) -c -o $@ $<
+
+# Para crear las carpetas necesarias
+directories:
+	mkdir -p $(OBJDIR) $(BINDIR)
+
+# Limpiar archivos generados
+clean:
+	$(RM) core $(TARGET) $(OBJS) $(RPC_OBJS)

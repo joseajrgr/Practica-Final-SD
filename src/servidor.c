@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "../include/almacenamiento.h"
 #include "../include/sockets.h"
+#include "../rpc/impresion.h"
 
 #define MAX_DATETIME_LENGTH 20
 #define MAX_IP_LENGTH 16
@@ -30,9 +31,14 @@ void *handle_client(void *args) {
     int32_t operacion = -1;
     int32_t result = 0;
     Respuesta respuesta;
-    
-    
-    // Recibir código de operación
+
+    // Variables para rpc
+    CLIENT *clnt;
+	void  *resultado_rpc;
+	entrada mensaje_rpc;
+    char *host = "127.0.0.1";
+
+	// Recibir código de operación
     if (recvMessage(client_socket, (char *)buffer, sizeof(int32_t)) == -1) {
         perror("s> Error al recibir el código de operación");
         result = 2;
@@ -53,6 +59,25 @@ void *handle_client(void *args) {
             result = 2;
         }
         
+        // Envío rpc
+        clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
+        if (clnt == NULL) {
+            clnt_pcreateerror (host);
+            exit (1);
+        }
+
+        mensaje_rpc.operacion = operacion;
+		mensaje_rpc.user = malloc(strlen(username));
+		strcpy(mensaje_rpc.user, username);
+        mensaje_rpc.file = "";
+        mensaje_rpc.datetime = malloc(strlen(datetime));
+        strcpy(mensaje_rpc.datetime, datetime);
+
+        resultado_rpc = imprimir_1(mensaje_rpc, clnt);
+        if (resultado_rpc == (void *) NULL) {
+            clnt_perror (clnt, "call failed");
+        }
+        clnt_destroy (clnt);
         
         pthread_mutex_lock(&mutex_almacenamiento);
         

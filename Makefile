@@ -5,7 +5,8 @@ TARGET = bin/servidor
 CC = gcc
 
 # Opciones del compilador
-CFLAGS = -Wall -Wextra -pthread
+CFLAGS = -Wall -Wextra -pthread -g -I/usr/include/tirpc
+LDFLAGS = -lnsl -ltirpc
 
 # Archivos fuente
 SRCS = src/servidor.c src/almacenamiento.c src/sockets.c
@@ -18,7 +19,7 @@ all: directories $(TARGET)
 
 # Regla para compilar el ejecutable
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) rpc/impresion_clnt.o rpc/impresion_xdr.o
 
 # Regla para compilar los archivos fuente en objetos
 obj/%.o: src/%.c include/%.h

@@ -1,6 +1,7 @@
 {
     "CodeGPT.apiKey": "CodeGPT Plus Beta",
     "files.associations": {
-        "almacenamiento.h": "c"
+        "almacenamiento.h": "c",
+        "impresion.h": "c"
     }
 }
