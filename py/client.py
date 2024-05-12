@@ -463,7 +463,6 @@ class client :
                             print("Syntax error. Use: QUIT")
                     else :
                         print("Error: command " + line[0] + " not valid.")
-                print("c> ")
             except Exception as e:
                 print("Exception: " + str(e))
 

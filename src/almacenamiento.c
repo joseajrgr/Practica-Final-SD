@@ -35,10 +35,9 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
     if (stat(user_directory, &st) == -1) {
         // La carpeta no existe, crearla
         if (mkdir(user_directory, 0777) == -1) {
-            perror("s> Error al crear la carpeta del usuario");
+            perror("\ns> Error al crear la carpeta del usuario");
             result = 2;
         } else {
-            printf("s> Usuario registrado y carpeta creada: %s\n", user_directory);
             result = 0;  // Registro exitoso
 
             // Construir la ruta al archivo de publicaciones del usuario
@@ -55,7 +54,6 @@ int register_user(char username[MAX_USERNAME_LENGTH]) {
             }
         }
     } else {
-        printf("s> El usuario ya está registrado: %s\n", username);
         result = 1;  // Usuario ya registrado
     }
 

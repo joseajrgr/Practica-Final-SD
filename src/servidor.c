@@ -183,8 +183,6 @@ void *handle_client(void *args) {
             strcat(respuesta.texto, "\n");
             printf("s> Enviando respuesta al cliente\n");
             sendMessage(client_socket, respuesta.texto, strlen(respuesta.texto)+1);
-        } else {
-            printf("s> Operación completada con éxito\n");
         }
     }
 
@@ -208,7 +206,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("s> init server %s:%d\ns>\n", "localhost", port);
+    printf("s> init server %s:%d\n", "localhost", port);
 
     // Configurar socket servidor
     int server_socket, client_socket;
