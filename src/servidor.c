@@ -21,6 +21,7 @@ struct client_thread_args {
 };
 
 void *handle_client(void *args) {
+    // Recibir argumentos
     struct client_thread_args *client_args = (struct client_thread_args *)args;
     int client_socket = client_args->socket;
     char buffer[4];
@@ -39,8 +40,6 @@ void *handle_client(void *args) {
     } else {
         operacion = ntohl(*(int*)buffer);
         
-        printf("s> Operación: %d\n", operacion);
-        
         // Recibir la fecha y la hora
         if (recvMessage(client_socket, (char *)datetime, MAX_DATETIME_LENGTH) == -1) {
             perror("s> Error al recibir la fecha y la hora");
@@ -53,11 +52,13 @@ void *handle_client(void *args) {
             perror("s> Error al recibir el nombre del cliente");
             result = 2;
         }
-        printf("s> %d FROM %s\n", operacion, username);
+        
         
         pthread_mutex_lock(&mutex_almacenamiento);
+        
         // Verificar si la operación es REGISTER
         if (operacion == 0) {
+            printf("s> REGISTER FROM %s\n", username);
             result = register_user(username);
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
@@ -66,6 +67,7 @@ void *handle_client(void *args) {
 
         // Verificar si la operación es UNREGISTER
         } else if (operacion == 1) {
+            printf("s> UNREGISTER FROM %s\n", username);
             result = unregister_user(username);
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
@@ -73,6 +75,7 @@ void *handle_client(void *args) {
             }
         // Verificar si la operación es CONNECT
         } else if (operacion == 2) {
+            printf("s> CONNECT FROM %s\n", username);
             char ip[MAX_IP_LENGTH];
             int32_t port;
             
@@ -95,12 +98,13 @@ void *handle_client(void *args) {
             
         // Verificar si la operación es DISCONNECT
         } else if (operacion == 3) {
+            printf("s> DISCONNECT FROM %s\n", username);
             result = disconnect_user(username);
             // Enviar resultado al cliente
             
         // Verificar si la operación es PUBLISH
         } else if (operacion == 4) {
-            printf("s> Operación PUBLISH\n");
+            printf("s> PUBLISH FROM %s\n", username);
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
@@ -123,6 +127,7 @@ void *handle_client(void *args) {
             
         // Verificar si la operación es DELETE
         } else if (operacion == 5) {
+            printf("s> DELETE FROM %s\n", username);
             char file_name[MAX_FILE_LENGTH];
 
             if (readLine(client_socket, file_name, sizeof(file_name)) == -1) {
@@ -134,12 +139,14 @@ void *handle_client(void *args) {
             
         // Verificar si la operación es LIST_USERS
         } else if (operacion == 6) {
+            printf("s> LIST_USERS FROM %s\n", username);
             // Recibir nombre de usuario del cliente  
             respuesta = list_connected_users(username);
             result = respuesta.result;
             
         // Verificar si la operación es LIST_CONTENT
         } else if (operacion == 7) {
+            printf("s> LIST_CONTENT FROM %s\n", username);
             char remote_user[MAX_USERNAME_LENGTH];
 
             // Recibir nombre de usuario remoto del cliente
@@ -156,41 +163,6 @@ void *handle_client(void *args) {
                 printf("texto: %s\n", respuesta.texto);
                 printf("s> Resultado de la operación LIST_CONTENT: %d\n", result);
             }
-        
-        // Verificar si la operación es GET_FILE
-        } else if (operacion == 8) {
-            char remote_user[MAX_USERNAME_LENGTH];
-            char file_name[MAX_FILE_LENGTH];
-            char remote_ip[16];
-            int remote_port;
-
-            if (readLine(client_socket, remote_user, sizeof(remote_user)) == -1) {
-                perror("s> Error al recibir el nombre de usuario remoto");
-                result = 2;
-            } else if (readLine(client_socket, file_name, sizeof(file_name)) == -1) {
-                perror("s> Error al recibir el nombre del fichero");
-                result = 2;
-            } else {
-                result = get_file_info(remote_user, file_name, remote_ip, &remote_port);
-                if (result == 0) {
-                    char success_code = 0;
-                    printf("s> IP remota: %s\n", remote_ip);
-                    printf("s> Puerto remoto: %d\n", remote_port);
-                    remote_ip[15] = '\0';
-                    char remote_port_str[6];
-                    sprintf(remote_port_str, "%d", remote_port);
-                    char delimiter = ':';
-                    send(client_socket, &success_code, sizeof(success_code), 0);
-                    send(client_socket, remote_ip, strlen(remote_ip) + 1, 0);
-                    send(client_socket, &delimiter, sizeof(delimiter), 0);
-                    send(client_socket, remote_port_str, strlen(remote_port_str) + 1, 0);
-
-                } else {
-                    char error_code = result;
-                    sendMessage(client_socket, &error_code, sizeof(error_code));
-                }
-            }
-        // Verificar si la operación no se conoce
         } else {
             printf("Operación desconocida: %d\n", operacion);
             result = 3;
@@ -199,11 +171,13 @@ void *handle_client(void *args) {
     pthread_mutex_unlock(&mutex_almacenamiento);
 
     printf("s>\n");
+
     // Enviar resultado al cliente
     if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
         perror("Error al enviar el resultado al cliente");
     }
 
+    // En caso de LIST_USERS o LIST_CONTENT, enviar la respuesta al cliente
     if (result == 0) {
         if (operacion == 6 || operacion == 7) {
             strcat(respuesta.texto, "\n");
@@ -221,10 +195,13 @@ void *handle_client(void *args) {
 }
 
 int main(int argc, char *argv[]) {
+    // Verificar argumentos
     if (argc!= 3 || strcmp(argv[1], "-p")!= 0) {
         printf("Uso: %s -p <port>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    // Comprobar que el puerto sea válido
     int port = atoi(argv[2]);
     if (port <= 0 || port > 65535) {
         printf("Puerto inválido. Debe estar entre 1 y 65535.\n");
@@ -233,7 +210,7 @@ int main(int argc, char *argv[]) {
 
     printf("s> init server %s:%d\ns>\n", "localhost", port);
 
-    // Configurar servidor
+    // Configurar socket servidor
     int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -246,34 +223,33 @@ int main(int argc, char *argv[]) {
     }
     fclose(file);
 
-    // Crear el archivo "publicaciones.txt" si no existe
-    FILE *publi = fopen("publicaciones.txt", "w");
-    if (publi == NULL) {
-        perror("Error al crear el archivo de conexiones");
-        exit(EXIT_FAILURE);
-    }
-    fclose(publi);
-
+    // Crear socket del servidor
     server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server_socket == -1) {
         perror("Error al crear el socket del servidor");
         exit(EXIT_FAILURE);
     }
 
+    // Enlazar el socket del servidor
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);  // Puerto del servidor
+    server_addr.sin_port = htons(port);
     memset(&(server_addr.sin_zero), '\0', 8);
 
+    
     if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
         perror("Error en el enlace del socket del servidor");
         exit(EXIT_FAILURE);
     }
 
+    // Modo de escucha del servidor
     if (listen(server_socket, 5) == -1) {
         perror("Error al poner el socket del servidor en modo de escucha");
         exit(EXIT_FAILURE);
     }
+
+    // Inicializar el mutex de almacenamiento
+    pthread_mutex_init(&mutex_almacenamiento, NULL);
 
     // Esperar conexiones de clientes y manejarlas
     while (1) {
