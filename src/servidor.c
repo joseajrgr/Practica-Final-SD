@@ -84,7 +84,7 @@ void *handle_client(void *args) {
                 perror("s> Error al recibir la IP del cliente");
                 result = 2;
             }
-            printf("s> IP: %s\n", ip);
+            
             // Recibir puerto del cliente
             if (recvMessage(client_socket, (char*)&port, sizeof(int32_t)) == -1) {
                 perror("s> Error al recibir el puerto del cliente");
@@ -92,7 +92,7 @@ void *handle_client(void *args) {
             } else {
                 port = ntohl(port);
             }
-            printf("s> Puerto: %d\n", port);
+           
             // Lógica para CONNECT
             result = connect_user(username, ip, port);
             
@@ -169,8 +169,6 @@ void *handle_client(void *args) {
         }      
     }
     pthread_mutex_unlock(&mutex_almacenamiento);
-
-    printf("s>\n");
 
     // Enviar resultado al cliente
     if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {

@@ -86,7 +86,6 @@ int unregister_user(char username[MAX_USERNAME_LENGTH]) {
             perror("s> Error al eliminar la carpeta del usuario");
             result = 2;
         } else {
-            printf("s> Usuario eliminado: %s\n", username);
             result = 0;  // Baja exitosa
         }
     }
@@ -100,7 +99,7 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
     // Construir la ruta de la carpeta del usuario
     char user_directory[MAX_USERNAME_LENGTH + sizeof(USERS_DIRECTORY) + 2];
     snprintf(user_directory, sizeof(user_directory), "%s/%s", USERS_DIRECTORY, username);
-    printf("s> Directorio del usuario: %s\n", user_directory);
+    
     // Verificar si la carpeta del usuario existe
     struct stat st = {0};
     if (stat(user_directory, &st) == 0) {
@@ -137,7 +136,6 @@ int connect_user(char username[MAX_USERNAME_LENGTH], char ip[16], int port) {
             }
         }
     } else {
-        printf("> Usuario no encontrado: %s\n", username);
         result = 1;  // Usuario no encontrado
     }
     return result;

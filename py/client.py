@@ -87,14 +87,15 @@ class client :
     @staticmethod
     def connect(user, listen_port=None):
         CONNECT = 2
-        print("c> Connecting to server...")
         
+        if client._user is not None:
+            print("c> CONNECT FAIL, USER ALREADY CONNECTED")
+            return client.RC.ERROR
+
         # Obtener un puerto libre si no se proporciona uno
         if listen_port is None:
             listen_port = aux.find_free_port()
-        
-        print("c> Port: " + str(listen_port))
-        
+                
         # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
         listen_thread = aux.start_listen_thread(listen_port)
         
