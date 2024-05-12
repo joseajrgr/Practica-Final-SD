@@ -197,7 +197,7 @@ void *handle_client(void *args) {
         }      
     }
     pthread_mutex_unlock(&mutex_almacenamiento);
-    
+
     printf("s>\n");
     // Enviar resultado al cliente
     if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
     }
     fclose(publi);
 
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server_socket == -1) {
         perror("Error al crear el socket del servidor");
         exit(EXIT_FAILURE);
