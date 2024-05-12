@@ -9,7 +9,7 @@ CFLAGS = -Wall -Wextra -pthread -g -I/usr/include/tirpc
 LDFLAGS = -lnsl -ltirpc
 
 # Archivos fuente
-SRCS = src/server.c src/almacenamiento.c src/sockets.c
+SRCS = src/server.c src/almacenamiento.c src/transferencias.c
 
 # Objetos generados
 OBJS = $(SRCS:src/%.c=obj/%.o)

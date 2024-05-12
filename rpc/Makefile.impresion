@@ -3,7 +3,7 @@
 
 # Parameters
 
-CLIENT = impresion_client
+CLIENT =
 SERVER = impresion_server
 
 SOURCES_CLNT.c = 
@@ -13,8 +13,8 @@ SOURCES_SVC.h =
 SOURCES.x = impresion.x
 
 TARGETS_SVC.c = impresion_svc.c impresion_server.c impresion_xdr.c 
-TARGETS_CLNT.c = impresion_clnt.c impresion_client.c impresion_xdr.c 
-TARGETS = impresion.h impresion_xdr.c impresion_clnt.c impresion_svc.c impresion_client.c impresion_server.c
+TARGETS_CLNT.c = impresion_clnt.c impresion_xdr.c 
+TARGETS = impresion.h impresion_xdr.c impresion_clnt.c impresion_svc.c impresion_server.c
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)

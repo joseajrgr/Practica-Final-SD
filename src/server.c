@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "../include/almacenamiento.h"
-#include "../include/sockets.h"
+#include "../include/transferencias.h"
 #include "../rpc/impresion.h"
 
 #define MAX_DATETIME_LENGTH 20
@@ -20,61 +20,6 @@ pthread_mutex_t mutex_almacenamiento;
 struct client_thread_args {
     int socket;
 };
-
-void envio_rpc(int32_t operacion, char username[MAX_USERNAME_LENGTH], char datetime[MAX_DATETIME_LENGTH]) {
-    CLIENT *clnt;
-	void *resultado_rpc;
-	entrada mensaje_rpc;
-    char *host = "127.0.0.1";
-
-    clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
-    if (clnt == NULL) {
-        clnt_pcreateerror (host);
-        exit (1);
-    }
-
-    mensaje_rpc.operacion = operacion;
-    mensaje_rpc.user = malloc(strlen(username));
-    strcpy(mensaje_rpc.user, username);
-    mensaje_rpc.file = "";
-    mensaje_rpc.datetime = malloc(strlen(datetime));
-    strcpy(mensaje_rpc.datetime, datetime);
-
-    resultado_rpc = imprimir_1(mensaje_rpc, clnt);
-    if (resultado_rpc == (void *) NULL) {
-        clnt_perror (clnt, "call failed");
-    }
-    clnt_destroy (clnt);
-}
-
-void envio_rpc_con_fichero(int32_t operacion, char username[MAX_USERNAME_LENGTH], 
-                            char datetime[MAX_DATETIME_LENGTH], char file[MAX_FILE_LENGTH]) {
-    CLIENT *clnt;
-	void *resultado_rpc;
-	entrada mensaje_rpc;
-    char *host = "127.0.0.1";
-
-    // Envío rpc
-    clnt = clnt_create (host, RPC_PROG, RPC_VERS, "tcp");
-    if (clnt == NULL) {
-        clnt_pcreateerror (host);
-        exit (1);
-    }
-
-    mensaje_rpc.operacion = operacion;
-    mensaje_rpc.user = malloc(strlen(username));
-    strcpy(mensaje_rpc.user, username);
-    mensaje_rpc.file = malloc(strlen(file));
-    strcpy(mensaje_rpc.file, file);
-    mensaje_rpc.datetime = malloc(strlen(datetime));
-    strcpy(mensaje_rpc.datetime, datetime);
-
-    resultado_rpc = imprimir_1(mensaje_rpc, clnt);
-    if (resultado_rpc == (void *) NULL) {
-        clnt_perror (clnt, "call failed");
-    }
-    clnt_destroy (clnt);
-}
 
 void *handle_client(void *args) {
     // Recibir argumentos
@@ -113,6 +58,7 @@ void *handle_client(void *args) {
         if (operacion == 0) {
             envio_rpc(operacion, username, datetime);
             result = register_user(username);
+
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
                 perror("Error al enviar el resultado al cliente");
@@ -123,6 +69,7 @@ void *handle_client(void *args) {
         } else if (operacion == 1) {
             envio_rpc(operacion, username, datetime);
             result = unregister_user(username);
+
             // Enviar resultado al cliente
             if (sendMessage(client_socket, (char*)&result, sizeof(int32_t)) == -1) {
                 perror("Error al enviar el resultado al cliente");
@@ -165,6 +112,7 @@ void *handle_client(void *args) {
             char file_name[MAX_FILE_LENGTH];
             char description[MAX_FILE_LENGTH];
 
+            // Recibir el nombre del fichero
             if (readLine(client_socket, file_name, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir el nombre del cliente");
                 result = 4;
@@ -172,7 +120,7 @@ void *handle_client(void *args) {
             
             envio_rpc_con_fichero(operacion, username, datetime, file_name);
 
-            // Recibir descripción del fichero del cliente
+            // Recibir descripción del fichero
             if (readLine(client_socket, description, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir la descripción del fichero");
                 result = 4;
@@ -186,6 +134,7 @@ void *handle_client(void *args) {
         } else if (operacion == 5) {
             char file_name[MAX_FILE_LENGTH];
 
+            // Recibir nombre del fichero
             if (readLine(client_socket, file_name, MAX_FILE_LENGTH) == -1) {
                 perror("s> Error al recibir el nombre del fichero");
                 result = 4;
