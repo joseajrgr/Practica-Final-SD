@@ -31,56 +31,67 @@ class client :
     def register(user):
         REGISTER = 0
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(REGISTER.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(REGISTER.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
+                user_data = user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> REGISTER OK")
-            elif response == b'\x01':
-                print("c> USERNAME IN USE")
-            else:
-                print("c> REGISTER FAIL")
-
-        return client.RC.ERROR
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> REGISTER OK")
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> USERNAME IN USE")
+                    return client.RC.USER_ERROR
+                else:
+                    print("c> REGISTER FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> REGISTER FAIL")
+            return client.RC.ERROR
 
    
     @staticmethod
     def unregister(user):
         UNREGISTER = 1
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(UNREGISTER.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(UNREGISTER.to_bytes(4, byteorder='big'))
 
-            user_data = user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> UNREGISTER OK")
-            elif response == b'\x01':
-                print("c> USER DOES NOT EXIST")
-            else:
-                print("c> UNREGISTER FAIL")
+                user_data = user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
 
-        return client.RC.ERROR
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> UNREGISTER OK")
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                else:
+                    print("c> UNREGISTER FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> UNREGISTER FAIL")
+            return client.RC.ERROR
 
 
     
@@ -91,84 +102,99 @@ class client :
         if client._user is not None:
             print("c> CONNECT FAIL, USER ALREADY CONNECTED")
             return client.RC.ERROR
-
-        # Obtener un puerto libre si no se proporciona uno
-        if listen_port is None:
-            listen_port = aux.find_free_port()
-                
-        # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
-        listen_thread = aux.start_listen_thread(listen_port)
         
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(CONNECT.to_bytes(4, byteorder='big'))
+        try:
+            # Obtener un puerto libre si no se proporciona uno
+            if listen_port is None:
+                listen_port = aux.find_free_port()
+                    
+            # Crear el socket de escucha del cliente y el hilo para atender las peticiones de descarga
+            listen_thread = aux.start_listen_thread(listen_port)
+            
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(CONNECT.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
+                user_data = user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
 
-            # Enviar IP y puerto del cliente al servidor
-            ip = socket.gethostbyname(socket.gethostname())
-            ip_data = ip.encode('utf-8') + b'\0'
-            s.sendall(ip_data)
-            port_data = listen_port.to_bytes(4, byteorder='big')
-            s.sendall(port_data)
+                # Enviar IP y puerto del cliente al servidor
+                ip = socket.gethostbyname(socket.gethostname())
+                ip_data = ip.encode('utf-8') + b'\0'
+                s.sendall(ip_data)
+                port_data = listen_port.to_bytes(4, byteorder='big')
+                s.sendall(port_data)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> CONNECT OK")
-                client._user = user
-                client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
-            elif response == b'\x01':
-                print("c> CONNECT FAIL, USER DOES NOT EXIST")
-                aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
-            elif response == b'\x02':
-                print("c> USER ALREADY CONNECTED")
-                client._user = user
-                client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
-            else:
-                print("c> CONNECT FAIL")
-                aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
-                
-        return client.RC.OK if response == b'\x00' else client.RC.ERROR
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> CONNECT OK")
+                    client._user = user
+                    client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> CONNECT FAIL, USER DOES NOT EXIST")
+                    aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> USER ALREADY CONNECTED")
+                    client._user = user
+                    client._listen_thread = listen_thread  # Guardar el hilo de escucha en el cliente
+                    return client.RC.ERROR
+                else:
+                    print("c> CONNECT FAIL")
+                    aux.stop_listen_thread(listen_thread)  # Detener el hilo de escucha si falla la conexión
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> CONNECT FAIL")
+            return client.RC.ERROR
+        
     
     @staticmethod
     def disconnect(user):
         DISCONNECT = 3
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(DISCONNECT.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(DISCONNECT.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
+                user_data = user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> DISCONNECT OK")
-                client._user = None
-                # Detener la ejecución del hilo y cerrar el puerto de escucha
-                aux.stop_listen_thread(client._listen_thread)
-                client._listen_thread = None
-            elif response == b'\x01':
-                print("c> DISCONNECT FAIL / USER DOES NOT EXIST")
-            elif response == b'\x02':
-                print("c> DISCONNECT FAIL / USER NOT CONNECTED")
-            else:
-                print("c> DISCONNECT FAIL")
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> DISCONNECT OK")
+                    client._user = None
+                    # Detener la ejecución del hilo y cerrar el puerto de escucha
+                    aux.stop_listen_thread(client._listen_thread)
+                    client._listen_thread = None
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> DISCONNECT FAIL / USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> DISCONNECT FAIL / USER NOT CONNECTED")
+                    return client.RC.ERROR
+                else:
+                    print("c> DISCONNECT FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> DISCONNECT FAIL")
+            return client.RC.ERROR
 
-        return client.RC.ERROR
+        
 
     @staticmethod
     def publish(file_name, description):
@@ -183,39 +209,47 @@ class client :
             print("c> PUBLISH FAIL, FILE DOES NOT EXIST")
             return client.RC.ERROR
         
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(PUBLISH.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = client._user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
-            
-            
-            file_name_data = file_name.encode('utf-8') + b'\0'
-            s.sendall(file_name_data)
-            
-            description_data = description.encode('utf-8') + b'\0'
-            s.sendall(description_data)
+                user_data = client._user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
+                
+                
+                file_name_data = file_name.encode('utf-8') + b'\0'
+                s.sendall(file_name_data)
+                
+                description_data = description.encode('utf-8') + b'\0'
+                s.sendall(description_data)
 
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> PUBLISH OK")
-            elif response == b'\x01':
-                print("c> PUBLISH FAIL, USER DOES NOT EXIST")
-            elif response == b'\x02':
-                print("c> PUBLISH FAIL, USER NOT CONNECTED")
-            elif response == b'\x03':
-                print("c> PUBLISH FAIL, CONTENT ALREADY PUBLISHED")
-            else:
-                print("c> PUBLISH FAIL")
-
-        return client.RC.ERROR
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> PUBLISH OK")
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> PUBLISH FAIL, USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> PUBLISH FAIL, USER NOT CONNECTED")
+                    return client.RC.ERROR
+                elif response == b'\x03':
+                    print("c> PUBLISH FAIL, CONTENT ALREADY PUBLISHED")
+                    return client.RC.ERROR
+                else:
+                    print("c> PUBLISH FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> PUBLISH FAIL")
+            return client.RC.ERROR
+        
 
     @staticmethod
     def delete(file_name):
@@ -225,35 +259,43 @@ class client :
             print("c> DELETE FAIL, USER NOT CONNECTED")
             return client.RC.ERROR
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(DELETE.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(DELETE.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = client._user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
+                user_data = client._user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
+            
+                file_name_data = file_name.encode('utf-8') + b'\0'
+                s.sendall(file_name_data)
+
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> DELETE OK")
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> DELETE FAIL, USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> DELETE FAIL, USER NOT CONNECTED")
+                    return client.RC.ERROR
+                elif response == b'\x03':
+                    print("c> DELETE FAIL, CONTENT NOT PUBLISHED")
+                    return client.RC.ERROR
+                else:
+                    print("c> DELETE FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> DELETE FAIL")
+            return client.RC.ERROR
         
-            file_name_data = file_name.encode('utf-8') + b'\0'
-            s.sendall(file_name_data)
-
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> DELETE OK")
-            elif response == b'\x01':
-                print("c> DELETE FAIL, USER DOES NOT EXIST")
-            elif response == b'\x02':
-                print("c> DELETE FAIL, USER NOT CONNECTED")
-            elif response == b'\x03':
-                print("c> DELETE FAIL, CONTENT NOT PUBLISHED")
-            else:
-                print("c> DELETE FAIL")
-
-        return client.RC.ERROR
 
     @staticmethod
     def listusers():
@@ -263,45 +305,54 @@ class client :
             print("c> LIST_USERS FAIL, USER NOT CONNECTED")
             return client.RC.ERROR
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(LISTUSERS.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            print(f"Enviando nombre de usuario: {client._user}")
-            user_data = client._user.encode('utf-8') + b'\0'
-            s.sendall(user_data)
-            
-            response = s.recv(1)
-            if response == b'\x00':
-                print("c> LIST_USERS OK")
-                num_users = s.recv(1024).decode('utf-8').rstrip('\0')  # Eliminar caracteres nulos al final
-                num_users = num_users.replace('\0', '')  # Eliminar todos los caracteres nulos
-                print(num_users)
-                # Procesar la información recibida y almacenarla en _users_info
-                for line in num_users.split('\n'):
-                    line = line.strip()  # Eliminar espacios en blanco al inicio y al final
-                    if line:  # Ignorar líneas vacías
-                        parts = line.split()
-                        if len(parts) == 3:  # Verificar que la línea tenga exactamente tres partes
-                            username, ip, port = parts
-                            client._users_info[username] = (ip, int(port))
-                        else:
-                            print(f"Error: Unexpected format in line '{line}'")
-                print(client._users_info)
-            elif response == b'\x01':
-                print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
-            elif response == b'\x02':
-                print("c> LIST_USERS FAIL, USER NOT CONNECTED")
-            else:
-                print("c> LIST_USERS FAIL")
+                print(f"Enviando nombre de usuario: {client._user}")
+                user_data = client._user.encode('utf-8') + b'\0'
+                s.sendall(user_data)
+                
+                response = s.recv(1)
+                if response == b'\x00':
+                    print("c> LIST_USERS OK")
+                    num_users = s.recv(1024).decode('utf-8').rstrip('\0')  # Eliminar caracteres nulos al final
+                    num_users = num_users.replace('\0', '')  # Eliminar todos los caracteres nulos
+                    print(num_users)
+                    # Procesar la información recibida y almacenarla en _users_info
+                    for line in num_users.split('\n'):
+                        line = line.strip()  # Eliminar espacios en blanco al inicio y al final
+                        if line:  # Ignorar líneas vacías
+                            parts = line.split()
+                            if len(parts) == 3:  # Verificar que la línea tenga exactamente tres partes
+                                username, ip, port = parts
+                                client._users_info[username] = (ip, int(port))
+                            else:
+                                print(f"Error: Unexpected format in line '{line}'")
+                    
+                    print(client._users_info)
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> LIST_USERS FAIL, USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> LIST_USERS FAIL, USER NOT CONNECTED")
+                    return client.RC.ERROR
+                else:
+                    print("c> LIST_USERS FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> LIST_USERS FAIL")
+            return client.RC.ERROR
 
-        return client.RC.ERROR
+       
 
     @staticmethod
     def listcontent(remote_user):
@@ -311,47 +362,56 @@ class client :
             print("c> LIST_CONTENT FAIL, USER NOT CONNECTED")
             return client.RC.ERROR
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((client._server, client._port))
-            s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((client._server, client._port))
+                s.sendall(LIST_CONTENT.to_bytes(4, byteorder='big'))
 
-            client_ws = zeep.Client(wsdl=WSDL)
-            datetime = client_ws.service.get_datetime()
-            print("c> Momento del envío al servidor:", datetime)
-            datetime = datetime.encode('utf-8') + b'\0'
-            s.sendall(datetime)
+                client_ws = zeep.Client(wsdl=WSDL)
+                datetime = client_ws.service.get_datetime()
+                print("c> Momento del envío al servidor:", datetime)
+                datetime = datetime.encode('utf-8') + b'\0'
+                s.sendall(datetime)
 
-            user_data = client._user.encode('utf-8') + b'\0'
-            
-            print("Enviando nombre de usuario: ", client._user)
-            s.sendall(user_data)
-            remote_user_data = remote_user.encode('utf-8') + b'\0'
-            
-            print("Enviando nombre de usuario remoto: ", remote_user)
-            s.sendall(remote_user_data)
+                user_data = client._user.encode('utf-8') + b'\0'
+                
+                print("Enviando nombre de usuario: ", client._user)
+                s.sendall(user_data)
+                remote_user_data = remote_user.encode('utf-8') + b'\0'
+                
+                print("Enviando nombre de usuario remoto: ", remote_user)
+                s.sendall(remote_user_data)
 
-            response = s.recv(1)
-            print("Respuesta del servidor:", response)
-            if response == b'\x00':
-                print("c> LIST_CONTENT OK")
-                num_files = s.recv(1024).decode('utf-8')
-                print(num_files)
-            elif response == b'\x01':
-                print("c> LIST_CONTENT FAIL, USER DOES NOT EXIST")
-            elif response == b'\x02':
-                print("c> LIST_CONTENT FAIL, USER NOT CONNECTED")
-            elif response == b'\x03':
-                print("c> LIST_CONTENT FAIL, REMOTE USER DOES NOT EXIST")
-            else:
-                print("c> LIST_CONTENT FAIL")
+                response = s.recv(1)
+                print("Respuesta del servidor:", response)
+                if response == b'\x00':
+                    print("c> LIST_CONTENT OK")
+                    num_files = s.recv(1024).decode('utf-8')
+                    print(num_files)
+                    return client.RC.OK
+                elif response == b'\x01':
+                    print("c> LIST_CONTENT FAIL, USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                elif response == b'\x02':
+                    print("c> LIST_CONTENT FAIL, USER NOT CONNECTED")
+                    return client.RC.ERROR
+                elif response == b'\x03':
+                    print("c> LIST_CONTENT FAIL, REMOTE USER DOES NOT EXIST")
+                    return client.RC.USER_ERROR
+                else:
+                    print("c> LIST_CONTENT FAIL")
+                    return client.RC.ERROR
+        except Exception as e:
+            print("c> LIST_CONTENT FAIL")
+            return client.RC.ERROR
 
-        return client.RC.ERROR
+        
 
     @staticmethod
     def getfile(user, remote_FileName, local_FileName):
         GET_FILE = 8
         result = 0
-        
+
         if client._user is None:
             print("c> GET_FILE FAIL, USER NOT CONNECTED")
             return 2
@@ -360,38 +420,42 @@ class client :
         if user in client._users_info:
             # Obtener la tupla (IP, puerto) asociada al usuario
             ip, port = client._users_info[user]
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-                    client_socket.connect((ip, port))
-                    client_ws = zeep.Client(wsdl=WSDL)
-                    datetime = client_ws.service.get_datetime()
-                    print("c> Momento del envío al servidor:", datetime)
-                    datetime = datetime.encode('utf-8') + b'\0'
-                    client_socket.sendall(datetime)
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                        client_socket.connect((ip, port))
+                        client_ws = zeep.Client(wsdl=WSDL)
+                        datetime = client_ws.service.get_datetime()
+                        print("c> Momento del envío al servidor:", datetime)
+                        datetime = datetime.encode('utf-8') + b'\0'
+                        client_socket.sendall(datetime)
 
-                    
-                    client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
+                        
+                        client_socket.sendall(remote_FileName.encode('utf-8') + b'\0')
 
-                    response = client_socket.recv(1)
-                    if response == b'\x00':
-                        with open(local_FileName, 'wb') as f:
-                            while True:
-                                data = client_socket.recv(1024)
-                                if not data:
-                                    break
-                                f.write(data)
-                        result = 0
-                        print("c> GET_FILE OK")
-                    elif response == b'\x01':
-                        print("c> GET_FILE FAIL / FILE NOT EXIST")
-                        return 1
-                    else:
-                        print("c> GET_FILE FAIL")
-                        return 2
+                        response = client_socket.recv(1)
+                        if response == b'\x00':
+                            with open(local_FileName, 'wb') as f:
+                                while True:
+                                    data = client_socket.recv(1024)
+                                    if not data:
+                                        break
+                                    f.write(data)
+                            result = 0
+                            print("c> GET_FILE OK")
+                        elif response == b'\x01':
+                            print("c> GET_FILE FAIL / FILE NOT EXIST")
+                            return client.RC.USER_ERROR
+                        else:
+                            print("c> GET_FILE FAIL")
+                            return client.RC.ERROR
+            except Exception as e:
+                print("c> GET_FILE FAIL")
+                return client.RC.ERROR
 
 
         else:
             print("c> GET_FILE FAIL, REMOTE USER DOES NOT EXIST")
-            return 2
+            return client.RC.USER_ERROR
 
         if result != 0 and os.path.exists(local_FileName):
             os.remove(local_FileName)
